@@ -212,16 +212,6 @@ class ThreadedRod:
     def loads(self, state):
         pass
 
-    def _get_cutter_shape(self, obj):
-        """Get the existing cutter body's shape, or None."""
-        name = obj._CutterBodyName
-        if not name:
-            return None
-        body = obj.Document.getObject(name)
-        if body is None or body.isNull():
-            return None
-        return body.Shape
-
     def _rebuild_cutter(self, obj):
         """Rebuild the cutter body (called from timer, outside recompute)."""
         if obj.Name in ThreadedRod._rebuilding:
@@ -235,9 +225,10 @@ class ThreadedRod:
             handed = obj.LeftHanded
 
             # Remove all old cutter bodies
-            for o in doc.Objects:
-                if o.Name.startswith("_ThreadCutterBody"):
-                    doc.removeObject(o.Name)
+            for o in list(doc.Objects):
+                if o is None or not o.Name.startswith("_ThreadCutterBody"):
+                    continue
+                doc.removeObject(o.Name)
 
             # Build new one
             name, body = build_cutter_body(doc, nom_d, pitch, length, handed)
@@ -287,13 +278,28 @@ class ThreadedRod:
         start_offset = obj.StartOffset
 
         # Use existing cutter body — do not create/remove inside execute
-        cutter_shape = self._get_cutter_shape(obj)
-        if cutter_shape is None or cutter_shape.isNull():
+        cutter_body = None
+        name = obj._CutterBodyName
+        if name:
+            cutter_body = obj.Document.getObject(name)
+        if cutter_body is None or not hasattr(cutter_body, 'Shape') or cutter_body.Shape.isNull():
             return
 
-        # Position cutter (body's Placement already set by _rebuild_cutter)
-        # We set obj.Shape to the boolean result
-        result = source_obj.Shape.cut(cutter_shape)
+        # Position cutter (Placement change does not need recompute)
+        axis = cyl_info['axis']
+        start_pt = cyl_info['axis_start']
+        z_axis = Vector(0, 0, 1)
+        pl = App.Placement()
+        pl.Base = start_pt + axis * start_offset
+        if abs(axis.dot(z_axis) - 1.0) > 1e-7:
+            ra = z_axis.cross(axis)
+            if ra.Length > 1e-7:
+                ra.normalize()
+                pl.Rotation = App.Rotation(ra, math.degrees(math.acos(z_axis.dot(axis))))
+        pl.Rotation = App.Rotation(axis, 37.5).multiply(pl.Rotation)
+        cutter_body.Placement = pl
+
+        result = source_obj.Shape.cut(cutter_body.Shape)
         if result.isNull():
             raise RuntimeError("Boolean cut failed.")
         obj.Shape = result
