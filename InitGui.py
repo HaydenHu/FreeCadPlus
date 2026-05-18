@@ -75,6 +75,8 @@ def _inject_into_partdesign(wb_name):
                     if menu is None:
                         menu = QtGui.QMenu()
                         a.setMenu(menu)
+                    # Increase button width for arrow spacing
+                    btn.setMinimumWidth(btn.width() + 14)
                     # Get command info
                     if our_cmd == "PartDesign_FullChamfer":
                         ci = {"MenuText": "Full Chamfer", "ToolTip": "Create a parametric full chamfer on selected edges"}
