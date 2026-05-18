@@ -231,10 +231,11 @@ class ThreadedRod:
             return
         ThreadedRod._recomputing.add(obj.Name)
         try:
-            # Remove old cutter body if exists
-            for cbody in doc.Objects:
-                if cbody.Name.startswith("_ThreadCutterBody") and cbody.TypeId == "PartDesign::Body":
-                    doc.removeObject(cbody.Name)
+            # Remove ALL old cutter bodies first
+            to_remove = [o.Name for o in doc.Objects
+                         if o.Name.startswith("_ThreadCutterBody")]
+            for n in to_remove:
+                doc.removeObject(n)
 
             # Build new cutter body (calls doc.recompute internally)
             cutter_name, cutter_body = build_cutter_body(
