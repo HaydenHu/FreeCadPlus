@@ -102,6 +102,7 @@ def _do_create_fillet(edges, radius):
             fp_obj, radius=radius, edge_indices=edge_indices, base_obj=base_obj)
         feature_fillet.ViewProviderFullFillet(fp_obj.ViewObject)
         doc.recompute()
+        Gui.Selection.addSelection(fp_obj)
         doc.commitTransaction()
         App.Console.PrintMessage(
             f"FullFillet: {len(edge_indices)} edges, radius: {radius:.4f} mm\n")
