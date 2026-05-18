@@ -316,7 +316,7 @@ def _do_create_threaded(face_info, params):
         try:
             fp_obj.Proxy._rebuild_cutter(fp_obj)
         except Exception as e:
-            import FreeCAD as App; App.Console.PrintWarning(f"FreeCadPlus: initial cutter build: {e}\n")
+            App.Console.PrintWarning(f"FreeCadPlus: initial cutter build: {e}\n")
         Gui.Selection.clearSelection()
         Gui.Selection.addSelection(fp_obj)
         doc.commitTransaction()
