@@ -158,11 +158,12 @@ def build_cutter_body(doc, nom_diameter, pitch, thread_length, handedness):
 class ThreadedRod:
     """FeaturePython Proxy for parametric threaded rod."""
 
-    _recomputing = set()  # guard against recursive doc.recompute()
+    _rebuild_timers = {}  # obj.Name -> QtCore.QTimer
 
     def __init__(self, obj, nom_diameter=6.0, pitch=1.0, thread_length=10.0,
                  left_handed=False, start_offset=0.0,
-                 source_obj=None, face_name=None):
+                 source_obj=None, face_name=None,
+                 cutter_body_name=None):
         if not hasattr(obj, 'NominalDiameter'):
             obj.addProperty('App::PropertyLength', 'NominalDiameter',
                 'Thread', 'Nominal thread diameter')
@@ -184,6 +185,9 @@ class ThreadedRod:
         if not hasattr(obj, 'CylinderFace'):
             obj.addProperty('App::PropertyString', 'CylinderFace',
                 'Thread', 'Cylindrical face name')
+        if not hasattr(obj, '_CutterBodyName'):
+            obj.addProperty('App::PropertyString', '_CutterBodyName',
+                'Internal', 'Cutter body name')._CutterBodyName = ''
 
         obj.Proxy = self
         obj.NominalDiameter = nom_diameter
@@ -195,6 +199,8 @@ class ThreadedRod:
             obj.BaseCylinder = source_obj
         if face_name:
             obj.CylinderFace = face_name
+        if cutter_body_name:
+            obj._CutterBodyName = cutter_body_name
 
     def __str__(self):
         return "ThreadedRod"
@@ -204,6 +210,62 @@ class ThreadedRod:
 
     def loads(self, state):
         pass
+
+    def _get_cutter_shape(self, obj):
+        """Get the existing cutter body's shape, or None."""
+        name = obj._CutterBodyName
+        if not name:
+            return None
+        body = obj.Document.getObject(name)
+        if body is None or body.isNull():
+            return None
+        return body.Shape
+
+    def _rebuild_cutter(self, obj):
+        """Rebuild the cutter body (called from timer, outside recompute)."""
+        doc = obj.Document
+        nom_d = obj.NominalDiameter
+        pitch = obj.Pitch
+        length = obj.ThreadLength
+        handed = obj.LeftHanded
+
+        # Remove all old cutter bodies
+        for o in doc.Objects:
+            if o.Name.startswith("_ThreadCutterBody"):
+                doc.removeObject(o.Name)
+
+        # Build new one
+        name, body = build_cutter_body(doc, nom_d, pitch, length, handed)
+        body.Visibility = False
+        for o in body.Group:
+            o.Visibility = False
+        obj._CutterBodyName = name
+
+        # Reposition
+        try:
+            face = obj.BaseCylinder.Shape.getElement(obj.CylinderFace)
+        except Exception:
+            obj.touch(); doc.recompute(); return
+        ci = get_cylindrical_face_info(face)
+        if not ci:
+            obj.touch(); doc.recompute(); return
+
+        axis = ci['axis']
+        start_pt = ci['axis_start']
+        z_axis = Vector(0, 0, 1)
+        pl = App.Placement()
+        pl.Base = start_pt + axis * obj.StartOffset
+        if abs(axis.dot(z_axis) - 1.0) > 1e-7:
+            ra = z_axis.cross(axis)
+            if ra.Length > 1e-7:
+                ra.normalize()
+                pl.Rotation = App.Rotation(ra, math.degrees(math.acos(z_axis.dot(axis))))
+        pl.Rotation = App.Rotation(axis, 37.5).multiply(pl.Rotation)
+        body.Placement = pl
+
+        # Touch and recompute to apply changes
+        obj.touch()
+        doc.recompute()
 
     def execute(self, obj):
         if obj.BaseCylinder is None or not obj.CylinderFace:
@@ -219,60 +281,44 @@ class ThreadedRod:
         if not cyl_info:
             return
 
-        doc = obj.Document
         nom_d = obj.NominalDiameter
         pitch = obj.Pitch
-        thread_length = obj.ThreadLength
-        handedness = obj.LeftHanded
         start_offset = obj.StartOffset
 
-        # Prevent recursion: if execute called due to our doc.recompute(), skip
-        if obj.Name in ThreadedRod._recomputing:
+        # Use existing cutter body — do not create/remove inside execute
+        cutter_shape = self._get_cutter_shape(obj)
+        if cutter_shape is None or cutter_shape.isNull():
             return
-        ThreadedRod._recomputing.add(obj.Name)
-        try:
-            # Remove ALL old cutter bodies first
-            to_remove = [o.Name for o in doc.Objects
-                         if o.Name.startswith("_ThreadCutterBody")]
-            for n in to_remove:
-                doc.removeObject(n)
 
-            # Build new cutter body (calls doc.recompute internally)
-            cutter_name, cutter_body = build_cutter_body(
-                doc, nom_d, pitch, thread_length, handedness)
-            cutter_body.Visibility = False
-            for o in cutter_body.Group:
-                o.Visibility = False
-
-            # Position cutter
-            axis = cyl_info['axis']
-            start_pt = cyl_info['axis_start']
-            z_axis = Vector(0, 0, 1)
-            placement = App.Placement()
-            placement.Base = start_pt + axis * start_offset
-            if abs(axis.dot(z_axis) - 1.0) > 1e-7:
-                rot_axis = z_axis.cross(axis)
-                if rot_axis.Length > 1e-7:
-                    rot_axis.normalize()
-                    ang = math.acos(z_axis.dot(axis))
-                    placement.Rotation = App.Rotation(rot_axis, math.degrees(ang))
-            twist = App.Rotation(axis, 37.5)
-            placement.Rotation = twist.multiply(placement.Rotation)
-            cutter_body.Placement = placement
-
-            # Boolean cut
-            result_shape = source_obj.Shape.cut(cutter_body.Shape)
-            if result_shape is None or result_shape.isNull():
-                raise RuntimeError("Boolean cut failed.")
-            obj.Shape = result_shape
-            nd = nom_d.Value if hasattr(nom_d, 'Value') else nom_d
-            pt = pitch.Value if hasattr(pitch, 'Value') else pitch
-            obj.Label = f"ThreadedRod_M{nd:.0f}x{pt:.2f}"
-        finally:
-            ThreadedRod._recomputing.discard(obj.Name)
+        # Position cutter (body's Placement already set by _rebuild_cutter)
+        # We set obj.Shape to the boolean result
+        result = source_obj.Shape.cut(cutter_shape)
+        if result.isNull():
+            raise RuntimeError("Boolean cut failed.")
+        obj.Shape = result
+        nd = nom_d.Value if hasattr(nom_d, 'Value') else nom_d
+        pt = pitch.Value if hasattr(pitch, 'Value') else pitch
+        obj.Label = f"ThreadedRod_M{nd:.0f}x{pt:.2f}"
 
     def onChanged(self, obj, prop):
-        pass
+        import FreeCAD as App
+        if prop in ("NominalDiameter", "Pitch", "ThreadLength", "LeftHanded", "StartOffset"):
+            # Delay rebuild to avoid disrupting current recompute
+            try:
+                from PySide import QtCore
+                from PySide import QtGui
+            except Exception:
+                pass
+            else:
+                # Cancel any existing timer for this object
+                old = ThreadedRod._rebuild_timers.get(obj.Name)
+                if old:
+                    old.stop()
+                timer = QtCore.QTimer()
+                timer.setSingleShot(True)
+                timer.timeout.connect(lambda: self._rebuild_cutter(obj))
+                timer.start(100)
+                ThreadedRod._rebuild_timers[obj.Name] = timer
 
 
 class ViewProviderThreadedRod:
