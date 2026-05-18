@@ -74,7 +74,11 @@ def _inject(wb_name):
                 if any(ma.text() == txt for ma in menu.actions()):
                     continue
                 menu.addSeparator()
-                act = menu.addAction(txt)
+                import os as _os
+                icon_dir = _os.path.join(FreeCAD.getUserAppDataDir(), "Mod", "FreeCadPlus", "Resources", "icons")
+                icon_file = {"PartDesign_FullChamfer": "FullChamfer.svg", "PartDesign_FullFillet": "FullFillet.svg", "PartDesign_ThreadedRod": "ThreadedRod.svg"}[our]
+                icon_path = _os.path.join(icon_dir, icon_file)
+                act = menu.addAction(QtGui.QIcon(icon_path), txt) if _os.path.exists(icon_path) else menu.addAction(txt)
                 act.setToolTip(tip)
                 act.triggered.connect(lambda c=False, cmd=our: Gui.runCommand(cmd))
         _INJECTED = True
