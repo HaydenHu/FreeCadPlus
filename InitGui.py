@@ -55,86 +55,52 @@ if not found:
 
 
 # Hook into PartDesign workbench to add dropdown menus
-_INJECTED = False
-
-def _find_tool_button(toolbar, cmd_internal):
-    """Find QToolButton for a command in the toolbar."""
-    import FreeCAD
-    for a in toolbar.actions():
-        if a.objectName() == cmd_internal:
-            w = toolbar.widgetForAction(a)
-            FreeCAD.Console.PrintMessage(f"FreeCadPlus: found button for {cmd_internal}, widget={w}\n")
-            return w
-    FreeCAD.Console.PrintMessage(f"FreeCadPlus: no action named {cmd_internal}\n")
-    return None
-
-
-def _add_dropdown(toolbar, builtin_cmd, our_cmd):
-    """Add a dropdown menu to a built-in toolbar button."""
-    from PySide import QtGui
-    import FreeCADGui
-    btn = _find_tool_button(toolbar, builtin_cmd)
-    if btn is None:
-        return False
-
-    menu = btn.menu()
-    if menu is None:
-        menu = QtGui.QMenu(btn)
-        btn.setMenu(menu)
-        btn.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
-
-    # Skip if already added
-    for a in menu.actions():
-        if a.objectName() == our_cmd:
-            return True
-
-    menu.addSeparator()
-    cmd = FreeCADGui.getCommand(our_cmd)
-    info = cmd.getInfo()
-    action = menu.addAction(info["MenuText"])
-    action.setToolTip(info.get("ToolTip", ""))
-    action.setObjectName(our_cmd)
-    action.triggered.connect(lambda checked=False, c=our_cmd: FreeCADGui.runCommand(c))
-    return True
-
-
-def _do_inject():
-    global _INJECTED
-    if _INJECTED:
-        return
-    from PySide import QtGui
-    import FreeCADGui
-    try:
-        mw = FreeCADGui.getMainWindow()
-        found_tb = False
-        for tb in mw.findChildren(QtGui.QToolBar):
-            title = tb.windowTitle()
-            FreeCAD.Console.PrintMessage(f"FreeCadPlus: found toolbar '{title}'\n")
-            if not title or "Part" not in title:
-                continue
-            found_tb = True
-            # Print all actions for debugging
-            for a in tb.actions():
-                if a.objectName():
-                    FreeCAD.Console.PrintMessage(f"  action: {a.objectName()} text='{a.text()}'\n")
-            r1 = _add_dropdown(tb, "PartDesign_Chamfer", "PartDesign_FullChamfer")
-            r2 = _add_dropdown(tb, "PartDesign_Fillet", "PartDesign_FullFillet")
-            FreeCAD.Console.PrintMessage(f"FreeCadPlus: Chamfer={r1} Fillet={r2}\n")
-            break
-        if not found_tb:
-            FreeCAD.Console.PrintWarning("FreeCadPlus: no PartDesign toolbar found\n")
-        _INJECTED = True
-    except Exception as e:
-        FreeCAD.Console.PrintWarning(f"FreeCadPlus: injection failed: {e}\n")
-
-
 def _inject_into_partdesign(wb_name):
-    import FreeCAD
-    FreeCAD.Console.PrintMessage(f"FreeCadPlus: workbench activated: {wb_name}\n")
     if "PartDesign" not in wb_name:
         return
-    from PySide import QtCore
-    QtCore.QTimer.singleShot(500, _do_inject)
+    from PySide import QtGui
+    import FreeCADGui as Gui
+    import FreeCAD
+    try:
+        mw = Gui.getMainWindow()
+        for tb in mw.findChildren(QtGui.QToolBar):
+            title = tb.windowTitle()
+            if not title or "Part" not in title:
+                continue
+            for a in tb.actions():
+                name = a.objectName()
+                if name == "PartDesign_Chamfer":
+                    btn = tb.widgetForAction(a)
+                    if btn:
+                        if not btn.menu():
+                            menu = QtGui.QMenu(btn)
+                            btn.setMenu(menu)
+                            btn.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
+                        menu = btn.menu()
+                        if menu:
+                            menu.addSeparator()
+                            ci = Gui.getCommand("PartDesign_FullChamfer").getInfo()
+                            act = menu.addAction(ci["MenuText"])
+                            act.setToolTip(ci.get("ToolTip", ""))
+                            act.triggered.connect(lambda c=False: Gui.runCommand("PartDesign_FullChamfer"))
+                elif name == "PartDesign_Fillet":
+                    btn = tb.widgetForAction(a)
+                    if btn:
+                        if not btn.menu():
+                            menu = QtGui.QMenu(btn)
+                            btn.setMenu(menu)
+                            btn.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
+                        menu = btn.menu()
+                        if menu:
+                            menu.addSeparator()
+                            ci = Gui.getCommand("PartDesign_FullFillet").getInfo()
+                            act = menu.addAction(ci["MenuText"])
+                            act.setToolTip(ci.get("ToolTip", ""))
+                            act.triggered.connect(lambda c=False: Gui.runCommand("PartDesign_FullFillet"))
+            break
+        FreeCAD.Console.PrintMessage("FreeCadPlus: dropdowns injected\n")
+    except Exception as e:
+        FreeCAD.Console.PrintWarning(f"FreeCadPlus: {e}\n")
 
 
 try:
