@@ -1,4 +1,4 @@
-# FreeCAD+ - Chamfer, fillet, and threaded rod tools
+# FreeCadPlus - Chamfer, fillet, and threaded rod tools
 # Injects directly into the PartDesign workbench toolbar via parameter system.
 
 import FreeCAD

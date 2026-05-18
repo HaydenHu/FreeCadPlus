@@ -1,4 +1,4 @@
-# FreeCADPlus
+# FreeCadPlus
 
 Parametric Chamfer, Fillet, and ThreadedRod addon for FreeCAD PartDesign.
 
@@ -6,7 +6,7 @@ Parametric Chamfer, Fillet, and ThreadedRod addon for FreeCAD PartDesign.
 
 ```bash
 cd "C:\Users\<user>\AppData\Roaming\FreeCAD\v1-2\Mod"
-git clone git@github.com:HaydenHu/FreeCADPlus.git
+git clone git@github.com:HaydenHu/FreeCadPlus.git
 ```
 
 Restart FreeCAD. The toolbar **FreeCadPlus** appears in the PartDesign workbench.
