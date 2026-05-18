@@ -4,8 +4,9 @@ import os
 import FreeCAD
 import FreeCADGui
 
-# Register translation path
-FreeCADGui.addLanguagePath(os.path.join(os.path.dirname(__file__), "Resources", "translations"))
+# Register translation path (__file__ not available in FreeCAD Mod loading)
+_mod_dir = os.path.join(FreeCAD.getUserAppDataDir(), "Mod", "FreeCadPlus")
+FreeCADGui.addLanguagePath(os.path.join(_mod_dir, "Resources", "translations"))
 FreeCADGui.updateLocale()
 
 import Commands
