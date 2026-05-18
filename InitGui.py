@@ -67,6 +67,8 @@ def _find_tool_button(toolbar, cmd_internal):
 
 def _add_dropdown(toolbar, builtin_cmd, our_cmd):
     """Add a dropdown menu to a built-in toolbar button."""
+    from PySide import QtGui
+    import FreeCADGui
     btn = _find_tool_button(toolbar, builtin_cmd)
     if btn is None:
         return False
@@ -96,6 +98,8 @@ def _do_inject():
     global _INJECTED
     if _INJECTED:
         return
+    from PySide import QtGui
+    import FreeCADGui
     try:
         mw = FreeCADGui.getMainWindow()
         for tb in mw.findChildren(QtGui.QToolBar):
@@ -114,7 +118,7 @@ def _do_inject():
 def _inject_into_partdesign(wb_name):
     if "PartDesign" not in wb_name:
         return
-    # Delay slightly to ensure toolbar is built
+    from PySide import QtCore
     QtCore.QTimer.singleShot(500, _do_inject)
 
 
