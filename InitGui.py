@@ -70,7 +70,6 @@ def _inject_into_partdesign(wb_name):
                 continue
             for a in tb.actions():
                 FreeCAD.Console.PrintMessage(f"DBG action: name='{a.objectName()}' text='{a.text()}'\n")
-            break
     except Exception as e:
         FreeCAD.Console.PrintWarning(f"FreeCadPlus: {e}\n")
 
