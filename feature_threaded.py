@@ -159,6 +159,7 @@ class ThreadedRod:
     """FeaturePython Proxy for parametric threaded rod."""
 
     _rebuild_timers = {}  # obj.Name -> QtCore.QTimer
+    _rebuilding = set()   # guard against recursive rebuild
 
     def __init__(self, obj, nom_diameter=6.0, pitch=1.0, thread_length=10.0,
                  left_handed=False, start_offset=0.0,
@@ -223,49 +224,49 @@ class ThreadedRod:
 
     def _rebuild_cutter(self, obj):
         """Rebuild the cutter body (called from timer, outside recompute)."""
-        doc = obj.Document
-        nom_d = obj.NominalDiameter
-        pitch = obj.Pitch
-        length = obj.ThreadLength
-        handed = obj.LeftHanded
-
-        # Remove all old cutter bodies
-        for o in doc.Objects:
-            if o.Name.startswith("_ThreadCutterBody"):
-                doc.removeObject(o.Name)
-
-        # Build new one
-        name, body = build_cutter_body(doc, nom_d, pitch, length, handed)
-        body.Visibility = False
-        for o in body.Group:
-            o.Visibility = False
-        obj._CutterBodyName = name
-
-        # Reposition
+        if obj.Name in ThreadedRod._rebuilding:
+            return
+        ThreadedRod._rebuilding.add(obj.Name)
         try:
+            doc = obj.Document
+            nom_d = obj.NominalDiameter
+            pitch = obj.Pitch
+            length = obj.ThreadLength
+            handed = obj.LeftHanded
+
+            # Remove all old cutter bodies
+            for o in doc.Objects:
+                if o.Name.startswith("_ThreadCutterBody"):
+                    doc.removeObject(o.Name)
+
+            # Build new one
+            name, body = build_cutter_body(doc, nom_d, pitch, length, handed)
+            body.Visibility = False
+            for o in body.Group:
+                o.Visibility = False
+            obj._CutterBodyName = name
+
+            # Reposition
             face = obj.BaseCylinder.Shape.getElement(obj.CylinderFace)
-        except Exception:
-            obj.touch(); doc.recompute(); return
-        ci = get_cylindrical_face_info(face)
-        if not ci:
-            obj.touch(); doc.recompute(); return
+            ci = get_cylindrical_face_info(face)
+            if ci:
+                axis = ci['axis']
+                start_pt = ci['axis_start']
+                z_axis = Vector(0, 0, 1)
+                pl = App.Placement()
+                pl.Base = start_pt + axis * obj.StartOffset
+                if abs(axis.dot(z_axis) - 1.0) > 1e-7:
+                    ra = z_axis.cross(axis)
+                    if ra.Length > 1e-7:
+                        ra.normalize()
+                        pl.Rotation = App.Rotation(ra, math.degrees(math.acos(z_axis.dot(axis))))
+                pl.Rotation = App.Rotation(axis, 37.5).multiply(pl.Rotation)
+                body.Placement = pl
 
-        axis = ci['axis']
-        start_pt = ci['axis_start']
-        z_axis = Vector(0, 0, 1)
-        pl = App.Placement()
-        pl.Base = start_pt + axis * obj.StartOffset
-        if abs(axis.dot(z_axis) - 1.0) > 1e-7:
-            ra = z_axis.cross(axis)
-            if ra.Length > 1e-7:
-                ra.normalize()
-                pl.Rotation = App.Rotation(ra, math.degrees(math.acos(z_axis.dot(axis))))
-        pl.Rotation = App.Rotation(axis, 37.5).multiply(pl.Rotation)
-        body.Placement = pl
-
-        # Touch and recompute to apply changes
-        obj.touch()
-        doc.recompute()
+            obj.touch()
+            doc.recompute()
+        finally:
+            ThreadedRod._rebuilding.discard(obj.Name)
 
     def execute(self, obj):
         if obj.BaseCylinder is None or not obj.CylinderFace:
@@ -301,24 +302,16 @@ class ThreadedRod:
         obj.Label = f"ThreadedRod_M{nd:.0f}x{pt:.2f}"
 
     def onChanged(self, obj, prop):
-        import FreeCAD as App
         if prop in ("NominalDiameter", "Pitch", "ThreadLength", "LeftHanded", "StartOffset"):
-            # Delay rebuild to avoid disrupting current recompute
-            try:
-                from PySide import QtCore
-                from PySide import QtGui
-            except Exception:
-                pass
-            else:
-                # Cancel any existing timer for this object
-                old = ThreadedRod._rebuild_timers.get(obj.Name)
-                if old:
-                    old.stop()
-                timer = QtCore.QTimer()
-                timer.setSingleShot(True)
-                timer.timeout.connect(lambda: self._rebuild_cutter(obj))
-                timer.start(100)
-                ThreadedRod._rebuild_timers[obj.Name] = timer
+            from PySide import QtCore
+            old = ThreadedRod._rebuild_timers.get(obj.Name)
+            if old:
+                old.stop()
+            timer = QtCore.QTimer()
+            timer.setSingleShot(True)
+            timer.timeout.connect(lambda o=obj: self._rebuild_cutter(o))
+            timer.start(200)
+            ThreadedRod._rebuild_timers[obj.Name] = timer
 
 
 class ViewProviderThreadedRod:
