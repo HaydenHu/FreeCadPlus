@@ -4,7 +4,6 @@ import FreeCAD
 import FreeCADGui
 import Commands
 
-# Register all three commands globally
 if "PartDesign_FullChamfer" not in FreeCADGui.listCommands():
     FreeCADGui.addCommand("PartDesign_FullChamfer", Commands.cmdFullChamfer())
 if "PartDesign_FullFillet" not in FreeCADGui.listCommands():
@@ -15,10 +14,9 @@ if "PartDesign_ThreadedRod" not in FreeCADGui.listCommands():
 class FreeCADPlusWorkbench:
     pass
 
-# Register FreeCadPlus toolbar in PartDesign
+# Clean up old toolbars
 pd_toolbars = FreeCAD.ParamGet(
     "User parameter:BaseApp/Workbench/PartDesignWorkbench/Toolbar")
-
 for g in pd_toolbars.GetGroups():
     tb = pd_toolbars.GetGroup(g)
     n = tb.GetString("Name")
@@ -28,13 +26,29 @@ for g in pd_toolbars.GetGroups():
         pd_toolbars.RemGroup(g)
         break
 
-# Only ThreadedRod in standalone toolbar
-tb = pd_toolbars.GetGroup("FreeCadPlus")
-tb.SetString("Name", "FreeCadPlus")
-tb.SetString("PartDesign_ThreadedRod", "FreeCadPlus")
-tb.SetBool("Active", 1)
+# Dropdown injection mapping: toolbar window title → { builtin_cmd: (our_cmd, text, tip) }
+INJECTIONS = {
+    "Part Design Dress-Up Features": {
+        "PartDesign_Chamfer": (
+            "PartDesign_FullChamfer",
+            "Full Chamfer",
+            "Create a parametric full chamfer on selected edges",
+        ),
+        "PartDesign_Fillet": (
+            "PartDesign_FullFillet",
+            "Full Fillet",
+            "Create a parametric full fillet on selected edges",
+        ),
+    },
+    "Part Design Modeling Features": {
+        "PartDesign_Hole": (
+            "PartDesign_ThreadedRod",
+            "Threaded Rod",
+            "Create a parametric external thread on a cylinder",
+        ),
+    },
+}
 
-# Inject FullChamfer/FullFillet as dropdowns under built-in Chamfer/Fillet
 _INJECTED = False
 
 def _inject(wb_name):
@@ -46,34 +60,30 @@ def _inject(wb_name):
     try:
         mw = Gui.getMainWindow()
         for tb in mw.findChildren(QtGui.QToolBar):
-            if tb.windowTitle() != "Part Design Dress-Up Features":
+            ttl = tb.windowTitle()
+            if ttl not in INJECTIONS:
                 continue
+            cmds = INJECTIONS[ttl]
             for a in tb.actions():
                 name = a.objectName()
-                if name not in ("PartDesign_Chamfer", "PartDesign_Fillet"):
+                if name not in cmds:
                     continue
                 btn = tb.widgetForAction(a)
                 if btn is None:
                     continue
-                our = ("PartDesign_FullChamfer" if name == "PartDesign_Chamfer"
-                       else "PartDesign_FullFillet")
-                txt = "Full Chamfer" if name == "PartDesign_Chamfer" else "Full Fillet"
-                tip = ("Create a parametric full chamfer on selected edges" if name == "PartDesign_Chamfer"
-                       else "Create a parametric full fillet on selected edges")
-                # Add menu to action if not already present
+                our, txt, tip = cmds[name]
                 menu = a.menu()
                 if menu is None:
                     menu = QtGui.QMenu()
                     a.setMenu(menu)
-                # Set button to show dropdown arrow, enlarge click area
+                # Button layout
                 btn.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
                 w = btn.iconSize().width()
                 btn.setMinimumWidth(int(w * 2))
                 btn.setStyleSheet(
                     "QToolButton { padding-right: 14px; } "
                     "QToolButton::menu-button { width: 14px; subcontrol-position: right; } "
-                    "QToolButton::menu-arrow { width: 14px; height: 14px;margin-left: 1px;padding-right: 5px; }")
-                # Skip if already added
+                    "QToolButton::menu-arrow { width: 14px; height: 14px; margin-left: 1px; padding-right: 5px; }")
                 if any(ma.text() == txt for ma in menu.actions()):
                     continue
                 menu.addSeparator()
