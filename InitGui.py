@@ -68,10 +68,10 @@ def _inject(wb_name):
                 # Set button to show dropdown arrow, enlarge click area
                 btn.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
                 w = btn.iconSize().width()
-                btn.setFixedWidth(int(w * 1.5))
+                btn.setFixedWidth(int(w * 1.5) + 4)
                 btn.setStyleSheet(
-                    "QToolButton::menu-button { width: 24px; } "
-                    "QToolButton::menu-arrow { width: 14px; height: 14px; }")
+                    "QToolButton::menu-button { width: 22px; margin-left: 4px; } "
+                    "QToolButton::menu-arrow { width: 12px; height: 12px; }")
                 # Skip if already added
                 if any(ma.text() == txt for ma in menu.actions()):
                     continue
