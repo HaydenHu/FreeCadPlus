@@ -219,16 +219,22 @@ class ThreadedRod:
         ThreadedRod._rebuilding.add(obj.Name)
         try:
             doc = obj.Document
-            nom_d = obj.NominalDiameter
-            pitch = obj.Pitch
-            length = obj.ThreadLength
+            # Convert Quantity to float for build_cutter_body
+            nd = obj.NominalDiameter
+            pt = obj.Pitch
+            nom_d = nd.Value if hasattr(nd, 'Value') else nd
+            pitch = pt.Value if hasattr(pt, 'Value') else pt
+            tl = obj.ThreadLength
+            length = tl.Value if hasattr(tl, 'Value') else tl
             handed = obj.LeftHanded
 
-            # Remove all old cutter bodies
-            for o in list(doc.Objects):
-                if o is None or not o.Name.startswith("_ThreadCutterBody"):
-                    continue
-                doc.removeObject(o.Name)
+            # Remove all old cutter bodies (iterate by name, handle deletions)
+            to_remove = [o.Name for o in doc.Objects if o and hasattr(o, 'Name') and o.Name.startswith("_ThreadCutterBody")]
+            for n in to_remove:
+                try:
+                    doc.removeObject(n)
+                except Exception:
+                    pass
 
             # Build new one
             name, body = build_cutter_body(doc, nom_d, pitch, length, handed)
