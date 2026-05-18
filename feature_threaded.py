@@ -56,109 +56,19 @@ def suggest_thread(radius):
     return None, best_diff
 
 
-def _get_thread_size_index(hole_obj, thread_type, nom_d, pitch):
-    hole_obj.ThreadType = thread_type
-    sizes = hole_obj.getEnumerationsOfProperty("ThreadSize")
-    best = None
-    best_score = float('inf')
-    for s in sizes:
-        sl = s.lower()
-        if sl.startswith("m") and "x" in sl:
-            try:
-                parts = sl[1:].split("x")
-                d = float(parts[0].strip())
-                p = float(parts[1].strip())
-                if abs(d - nom_d) < 0.02:
-                    score = abs(p - pitch)
-                    if score < best_score:
-                        best_score = score
-                        best = s
-            except (ValueError, IndexError):
-                continue
-    if best:
-        return sizes.index(best)
-    return None
 
+def make_cutter_shape(nom_diameter, pitch, thread_length):
+    """Build thread cutter shape via Part ops. No doc.recompute()."""
+    outer_r = nom_diameter / 2.0 + max(pitch * 2, 5.0)
+    outer = Part.makeCylinder(outer_r, thread_length)
+    inner = Part.makeCylinder(nom_diameter / 2.0 + 0.01, thread_length)
+    return outer.cut(inner)
 
-def build_cutter_body(doc, nom_diameter, pitch, thread_length, handedness):
-    """Build a thread cutter body. Returns (name, body)."""
-    cutter_radius = nom_diameter / 2.0 + max(pitch * 2, 5.0)
-    body = doc.addObject("PartDesign::Body", "_ThreadCutterBody")
-    body.Label = ""
-
-    cyl = doc.addObject("PartDesign::AdditiveCylinder", "_CutterBase")
-    cyl.Label = ""
-    cyl.Radius = cutter_radius
-    cyl.Height = thread_length
-    cyl.Angle = 360
-    body.addObject(cyl)
-    doc.recompute()
-
-    import Sketcher
-    face_name = "Face2"
-    for i, f in enumerate(cyl.Shape.Faces):
-        try:
-            d_info = f.distToShape(Part.Vertex(Vector(0, 0, thread_length)))
-            if abs(d_info[0]) < 0.01:
-                face_name = "Face{}".format(i + 1)
-                break
-        except Exception:
-            continue
-
-    sketch = doc.addObject("Sketcher::SketchObject", "_CutterSketch")
-    sketch.Label = ""
-    body.addObject(sketch)
-    sketch.AttachmentSupport = (cyl, face_name)
-    sketch.MapMode = "FlatFace"
-    doc.recompute()
-
-    geo_list = [Part.Circle()]
-    geo_list[0].Radius = nom_diameter / 2.0
-    sketch.addGeometry(geo_list, False)
-    sketch.addConstraint(Sketcher.Constraint("Coincident", 0, 3, -1, 1))
-    doc.recompute()
-
-    hole = doc.addObject("PartDesign::Hole", "_CutterHole")
-    hole.Label = ""
-    body.addObject(hole)
-    hole.Profile = sketch
-    hole.Diameter = nom_diameter
-    hole.Depth = thread_length + pitch * 1.5
-    hole.DepthType = 0
-    hole.DrillPoint = 0
-    hole.Threaded = 1
-    hole.ModelThread = 1
-    hole.ThreadDepthType = 0
-    hole.ThreadDirection = 1 if handedness else 0
-    hole.ThreadClass = 0
-    hole.HoleCutType = 0
-    hole.Tapered = 0
-    hole.Reversed = 0
-    hole.Refine = True
-
-    idx = _get_thread_size_index(hole, 1, nom_diameter, pitch)
-    if idx is not None:
-        hole.ThreadType = 1
-        hole.ThreadSize = idx
-    else:
-        idx = _get_thread_size_index(hole, 2, nom_diameter, pitch)
-        if idx is not None:
-            hole.ThreadType = 2
-            hole.ThreadSize = idx
-        else:
-            sizes_str = ", ".join(hole.getEnumerationsOfProperty("ThreadSize")[:10])
-            raise RuntimeError(
-                f"Cannot find matching thread size for M{nom_diameter:.0f}x{pitch:.2f}."
-                f" Available: {sizes_str}")
-
-    doc.recompute()
-    return body.Name, body
 
 
 class ThreadedRod:
     """FeaturePython Proxy for parametric threaded rod."""
 
-    _exec_depth = 0
 
     def __init__(self, obj, nom_diameter=6.0, pitch=1.0, thread_length=10.0,
                  left_handed=False, start_offset=0.0,
@@ -184,10 +94,6 @@ class ThreadedRod:
         if not hasattr(obj, 'CylinderFace'):
             obj.addProperty('App::PropertyString', 'CylinderFace',
                 'Thread', 'Cylindrical face name')
-        if not hasattr(obj, '_CutterBodyName'):
-            obj.addProperty('App::PropertyString', '_CutterBodyName',
-                'Internal', 'Cutter body')._CutterBodyName = ''
-
         obj.Proxy = self
         obj.NominalDiameter = nom_diameter
         obj.Pitch = pitch
@@ -198,7 +104,6 @@ class ThreadedRod:
             obj.BaseCylinder = source_obj
         if face_name:
             obj.CylinderFace = face_name
-        obj._CutterBodyName = ''
 
     def __str__(self):
         return "ThreadedRod"
@@ -209,88 +114,50 @@ class ThreadedRod:
     def loads(self, state):
         pass
 
-    _exec_depth = 0
 
     def execute(self, obj):
-        if ThreadedRod._exec_depth > 0:
-            return
-        ThreadedRod._exec_depth += 1
-        try:
-            self._do_execute(obj)
-        finally:
-            ThreadedRod._exec_depth -= 1
-
-    def _do_execute(self, obj):
         if obj.BaseCylinder is None or not obj.CylinderFace:
             return
-
         source_obj = obj.BaseCylinder
         if not hasattr(source_obj, 'Shape'):
             return
-
         try:
             face = source_obj.Shape.getElement(obj.CylinderFace)
         except Exception:
             return
-
         cyl_info = get_cylindrical_face_info(face)
         if not cyl_info:
             return
 
-        doc = obj.Document
         nom_d = obj.NominalDiameter
         pitch = obj.Pitch
         thread_length = obj.ThreadLength
-        handedness = obj.LeftHanded
         start_offset = obj.StartOffset
 
-        # Rebuild cutter body (handles parameter changes)
-        old_name = obj._CutterBodyName
-        try:
-            new_name, cutter_body = build_cutter_body(
-                doc, nom_d, pitch, thread_length, handedness)
-        except Exception as e:
-            raise RuntimeError(f"Cutter build failed: {e}")
+        # Build cutter shape directly (no Body/doc.recompute needed)
+        cutter_shape = make_cutter_shape(nom_d, pitch, thread_length)
 
-        # Clean up old cutter body
-        if old_name:
-            old = doc.getObject(old_name)
-            if old and old.Name != new_name:
-                try:
-                    doc.removeObject(old_name)
-                except Exception:
-                    pass
-
-        obj._CutterBodyName = new_name
-        cutter_body.Visibility = False
-        for o in cutter_body.Group:
-            o.Visibility = False
-
-        # Position the cutter body
+        # Get axis info and set placement
         axis = cyl_info['axis']
         start_pt = cyl_info['axis_start']
-        z_axis = Vector(0, 0, 1)
-
         placement = App.Placement()
         placement.Base = start_pt + axis * start_offset
-
+        z_axis = Vector(0, 0, 1)
         if abs(axis.dot(z_axis) - 1.0) > 1e-7:
             rot_axis = z_axis.cross(axis)
             if rot_axis.Length > 1e-7:
                 rot_axis.normalize()
                 ang = math.acos(z_axis.dot(axis))
                 placement.Rotation = App.Rotation(rot_axis, math.degrees(ang))
-
         twist = App.Rotation(axis, 37.5)
         placement.Rotation = twist.multiply(placement.Rotation)
-        cutter_body.Placement = placement
+        cutter_shape.Placement = placement
 
-        # Boolean cut with the source object's shape
-        result_shape = source_obj.Shape.cut(cutter_body.Shape)
-        if result_shape is None or result_shape.isNull():
-            raise RuntimeError("Boolean cut failed. Check thread diameter.")
-
-        obj.Shape = result_shape
+        # Bool cut
+        result = source_obj.Shape.cut(cutter_shape)
+        if result is None or result.isNull():
+            raise RuntimeError("Boolean cut failed.")
+        obj.Shape = result
         nd = nom_d.Value if hasattr(nom_d, 'Value') else nom_d
         pt = pitch.Value if hasattr(pitch, 'Value') else pitch
         obj.Label = f"ThreadedRod_M{nd:.0f}x{pt:.2f}"
