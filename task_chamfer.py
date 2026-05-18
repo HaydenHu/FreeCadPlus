@@ -117,8 +117,9 @@ def _do_create_chamfer(edges, size):
             fp_obj, size=size, edge_indices=edge_indices, base_obj=base_obj)
         feature_chamfer.ViewProviderFullChamfer(fp_obj.ViewObject)
         doc.recompute()
+        Gui.Selection.clearSelection()
+        Gui.Selection.addSelection(doc.Name, fp_obj.Name)
         doc.commitTransaction()
-        doc.ActiveObject = fp_obj
         App.Console.PrintMessage(
             f"FullChamfer: {len(edge_indices)} edges, size: {size:.4f} mm\n")
     except Exception as e:
