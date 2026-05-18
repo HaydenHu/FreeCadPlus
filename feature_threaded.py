@@ -246,6 +246,9 @@ class ThreadedRod:
             import Sketcher
             sketch = doc.getObject("_CutterSketch")
             if sketch is None:
+                # Need recompute before sketch attachment (cyl needs valid shape)
+                body.touch()
+                doc.recompute()
                 sketch = doc.addObject("Sketcher::SketchObject", "_CutterSketch")
                 sketch.Label = ""
                 body.addObject(sketch)
