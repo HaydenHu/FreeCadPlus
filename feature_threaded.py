@@ -179,8 +179,8 @@ class ThreadedRod:
             obj.addProperty('App::PropertyBool', 'LeftHanded',
                 'Thread', 'Left-handed thread')
         if not hasattr(obj, 'StartOffset'):
-            obj.addProperty('App::PropertyLength', 'StartOffset',
-                'Thread', 'Start offset from face')
+            obj.addProperty('App::PropertyFloat', 'StartOffset',
+                'Thread', 'Start offset. Negative = inward')
         if not hasattr(obj, 'BaseCylinder'):
             obj.addProperty('App::PropertyLink', 'BaseCylinder',
                 'Thread', 'Object containing the cylindrical face')
