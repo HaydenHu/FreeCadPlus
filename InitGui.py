@@ -54,6 +54,7 @@ def _inject_into_partdesign(wb_name):
         return
     from PySide import QtGui
     import FreeCADGui as Gui
+    import FreeCAD
     try:
         mw = Gui.getMainWindow()
         for tb in mw.findChildren(QtGui.QToolBar):
@@ -61,26 +62,45 @@ def _inject_into_partdesign(wb_name):
                 continue
             for a in tb.actions():
                 name = a.objectName()
+                FreeCAD.Console.PrintMessage(f"DBG: action {name} text='{a.text()}'\n")
                 if name in ("PartDesign_Chamfer", "PartDesign_Fillet"):
                     btn = tb.widgetForAction(a)
+                    FreeCAD.Console.PrintMessage(f"DBG: btn={btn} type={type(btn).__name__ if btn else 'None'}\n")
+                    if btn is None:
+                        # Try to find button by searching all children
+                        for child in tb.findChildren(QtGui.QToolButton):
+                            if child.defaultAction() == a:
+                                btn = child
+                                FreeCAD.Console.PrintMessage(f"DBG: found btn via search: {btn}\n")
+                                break
                     if btn is None:
                         continue
                     our_cmd = ("PartDesign_FullChamfer" if name == "PartDesign_Chamfer"
                                else "PartDesign_FullFillet")
-                    if btn.menu() is None:
+                    existing_menu = btn.menu()
+                    FreeCAD.Console.PrintMessage(f"DBG: existing_menu={existing_menu}\n")
+                    if existing_menu is None:
                         menu = QtGui.QMenu(btn)
                         btn.setMenu(menu)
                         btn.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
-                    menu = btn.menu()
-                    if menu:
+                    else:
+                        menu = existing_menu
+                    # Skip if already added
+                    already = False
+                    for ma in menu.actions():
+                        if ma.objectName() == our_cmd:
+                            already = True
+                            break
+                    if not already:
                         menu.addSeparator()
                         ci = Gui.getCommand(our_cmd).getInfo()
                         act = menu.addAction(ci["MenuText"])
                         act.setToolTip(ci.get("ToolTip", ""))
+                        act.setObjectName(our_cmd)
                         act.triggered.connect(lambda c=False, cmd=our_cmd: Gui.runCommand(cmd))
+                        FreeCAD.Console.PrintMessage(f"DBG: added {our_cmd} to menu\n")
             break
     except Exception as e:
-        import FreeCAD
         FreeCAD.Console.PrintWarning(f"FreeCadPlus: {e}\n")
 
 
