@@ -319,6 +319,11 @@ def _do_create_threaded(face_info, params):
             App.Console.PrintWarning(f"FreeCadPlus: initial cutter build: {e}\n")
         Gui.Selection.clearSelection()
         Gui.Selection.addSelection(fp_obj)
+        if body:
+            try:
+                Gui.ActiveDocument.ActiveView.setActiveObject('pdbody', body)
+            except Exception:
+                pass
         doc.commitTransaction()
         App.Console.PrintMessage(
             f"ThreadedRod: M{params['nom_diameter']:.0f}x{params['pitch']:.2f}, "

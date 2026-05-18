@@ -119,6 +119,11 @@ def _do_create_chamfer(edges, size):
         doc.recompute()
         Gui.Selection.clearSelection()
         Gui.Selection.addSelection(fp_obj)
+        if body:
+            try:
+                Gui.ActiveDocument.ActiveView.setActiveObject('pdbody', body)
+            except Exception:
+                pass
         doc.commitTransaction()
         App.Console.PrintMessage(
             f"FullChamfer: {len(edge_indices)} edges, size: {size:.4f} mm\n")

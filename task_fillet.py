@@ -104,6 +104,11 @@ def _do_create_fillet(edges, radius):
         doc.recompute()
         Gui.Selection.clearSelection()
         Gui.Selection.addSelection(fp_obj)
+        if body:
+            try:
+                Gui.ActiveDocument.ActiveView.setActiveObject('pdbody', body)
+            except Exception:
+                pass
         doc.commitTransaction()
         App.Console.PrintMessage(
             f"FullFillet: {len(edge_indices)} edges, radius: {radius:.4f} mm\n")
