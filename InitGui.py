@@ -1,14 +1,7 @@
 # FreeCadPlus - Chamfer, fillet, and threaded rod tools
 
-import os
 import FreeCAD
 import FreeCADGui
-
-# Register translation path (__file__ not available in FreeCAD Mod loading)
-_mod_dir = os.path.join(FreeCAD.getUserAppDataDir(), "Mod", "FreeCadPlus")
-FreeCADGui.addLanguagePath(os.path.join(_mod_dir, "Resources", "translations"))
-FreeCADGui.updateLocale()
-
 import Commands
 
 translate = FreeCAD.Qt.translate

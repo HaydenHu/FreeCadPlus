@@ -6,6 +6,7 @@ import FreeCADGui as Gui
 from PySide import QtGui, QtCore
 import pd_utils
 import feature_chamfer
+from i18n import tr
 
 
 class ChamferTaskPanel:
@@ -18,14 +19,14 @@ class ChamferTaskPanel:
     def _build_ui(self):
         layout = QtGui.QVBoxLayout(self.form)
 
-        title = "Edit FullChamfer" if self.feature_obj else "Full Chamfer"
+        title = tr("Edit FullChamfer") if self.feature_obj else tr("Full Chamfer")
         layout.addWidget(QtGui.QLabel(
-            f"<b>{title}</b><br>Selected {len(self.edges)} edge(s)"))
+            f"<b>{title}</b><br>{tr('Selected')} {len(self.edges)} {tr('edge(s)')}"))
 
         layout.addSpacing(8)
 
         r = QtGui.QHBoxLayout()
-        r.addWidget(QtGui.QLabel("Chamfer distance (mm):"))
+        r.addWidget(QtGui.QLabel(tr("Chamfer distance (mm):")))
         self.dist_spin = QtGui.QDoubleSpinBox()
         self.dist_spin.setRange(0.001, 99999.0)
         self.dist_spin.setDecimals(4)
@@ -36,7 +37,7 @@ class ChamferTaskPanel:
         layout.addSpacing(4)
 
         if self.edges:
-            txt = "Edge parameters:\n"
+            txt = tr("Edge parameters:") + "\n"
             for i, ed in enumerate(self.edges):
                 is_circle = False
                 try:
@@ -44,9 +45,9 @@ class ChamferTaskPanel:
                     is_circle = hasattr(c, 'Radius') and c.Radius > 0
                 except Exception:
                     pass
-                typ = "circle" if is_circle else "straight"
+                typ = tr("circle") if is_circle else tr("straight")
                 txt += (f"  Edge {i+1} ({typ}): "
-                        f"min adj len {ed['min_len']:.4f} mm\n")
+                        f"{tr('min adj len')} {ed['min_len']:.4f} mm\n")
             layout.addWidget(QtGui.QLabel(txt))
 
         layout.addSpacing(4)
@@ -55,7 +56,6 @@ class ChamferTaskPanel:
         self.method_label.setTextFormat(QtCore.Qt.RichText)
         layout.addWidget(self.method_label)
 
-        # Set initial value
         if self.feature_obj:
             val = self.feature_obj.Size
             self.dist_spin.setValue(val.Value if hasattr(val, 'Value') else val)
@@ -81,8 +81,8 @@ class ChamferTaskPanel:
         if self.edges:
             ml = min(ed['min_len'] for ed in self.edges)
             self.method_label.setText(
-                "<span style='color:#228833;'>OCCT chamfer</span>" if d < ml
-                else "<span style='color:#cc8800;'>Boolean cut (full chamfer)</span>")
+                f"<span style='color:#228833;'>{tr('OCCT chamfer')}</span>" if d < ml
+                else f"<span style='color:#cc8800;'>{tr('Boolean cut (full chamfer)')}</span>")
 
     def accept(self):
         Gui.Control.closeDialog()
@@ -122,4 +122,4 @@ def _do_create_chamfer(edges, size):
             f"FullChamfer: {len(edge_indices)} edges, size: {size:.4f} mm\n")
     except Exception as e:
         doc.abortTransaction()
-        QtGui.QMessageBox.critical(None, "Chamfer failed", str(e))
+        QtGui.QMessageBox.critical(None, tr("Chamfer failed"), str(e))

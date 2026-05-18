@@ -6,6 +6,7 @@ import FreeCADGui as Gui
 from PySide import QtGui
 import pd_utils
 import feature_fillet
+from i18n import tr
 
 
 class FilletTaskPanel:
@@ -18,14 +19,14 @@ class FilletTaskPanel:
     def _build_ui(self):
         layout = QtGui.QVBoxLayout(self.form)
 
-        title = "Edit FullFillet" if self.feature_obj else "Full Fillet"
+        title = tr("Edit FullFillet") if self.feature_obj else tr("Full Fillet")
         layout.addWidget(QtGui.QLabel(
-            f"<b>{title}</b><br>Selected {len(self.edges)} edge(s)"))
+            f"<b>{title}</b><br>{tr('Selected')} {len(self.edges)} {tr('edge(s)')}"))
 
         layout.addSpacing(8)
 
         r = QtGui.QHBoxLayout()
-        r.addWidget(QtGui.QLabel("Fillet radius (mm):"))
+        r.addWidget(QtGui.QLabel(tr("Fillet radius (mm):")))
         self.radius_spin = QtGui.QDoubleSpinBox()
         self.radius_spin.setRange(0.001, 99999.0)
         self.radius_spin.setDecimals(4)
@@ -36,7 +37,7 @@ class FilletTaskPanel:
         layout.addSpacing(4)
 
         if self.edges:
-            txt = "Edge parameters:\n"
+            txt = tr("Edge parameters:") + "\n"
             for i, ed in enumerate(self.edges):
                 is_circle = False
                 try:
@@ -44,11 +45,11 @@ class FilletTaskPanel:
                     is_circle = hasattr(c, 'Radius') and c.Radius > 0
                 except Exception:
                     pass
-                typ = "circle" if is_circle else "straight"
+                typ = tr("circle") if is_circle else tr("straight")
                 def_r, _ = self._get_default_radius(ed['edge'], ed['obj'].Shape)
                 txt += (f"  Edge {i+1} ({typ}): "
-                        f"default {def_r:.4f} mm  "
-                        f"min adj len {ed['min_len']:.4f} mm\n")
+                        f"{tr('default')} {def_r:.4f} mm  "
+                        f"{tr('min adj len')} {ed['min_len']:.4f} mm\n")
             layout.addWidget(QtGui.QLabel(txt))
 
         if self.feature_obj:
@@ -106,4 +107,4 @@ def _do_create_fillet(edges, radius):
             f"FullFillet: {len(edge_indices)} edges, radius: {radius:.4f} mm\n")
     except Exception as e:
         doc.abortTransaction()
-        QtGui.QMessageBox.critical(None, "Fillet failed", str(e))
+        QtGui.QMessageBox.critical(None, tr("Fillet failed"), str(e))

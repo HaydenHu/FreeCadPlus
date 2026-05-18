@@ -3,9 +3,10 @@
 
 import FreeCAD as App
 import FreeCADGui as Gui
-from PySide import QtGui, QtCore
+from PySide import QtGui
 import pd_utils
 import feature_threaded
+from i18n import tr
 
 
 def _parse_thread_sizes(sizes):
@@ -72,33 +73,31 @@ class ThreadedRodTaskPanel:
         layout = QtGui.QVBoxLayout(self.form)
 
         if self.feature_obj:
-            layout.addWidget(QtGui.QLabel("<b>Edit ThreadedRod</b>"))
+            layout.addWidget(QtGui.QLabel(f"<b>{tr('Edit ThreadedRod')}</b>"))
         elif self.face_info:
             layout.addWidget(QtGui.QLabel(
-                f"<b>Threaded Rod</b><br>"
-                f"Radius: {self.face_info['radius']:.3f} mm<br>"
-                f"Height: {self.face_info['height']:.3f} mm"))
+                f"<b>{tr('Threaded Rod')}</b><br>"
+                f"{tr('Radius:')} {self.face_info['radius']:.3f} mm<br>"
+                f"{tr('Height:')} {self.face_info['height']:.3f} mm"))
         else:
             layout.addWidget(QtGui.QLabel(
-                "<b>Threaded Rod</b><br>"
-                "<span style='color:#cc8800;'>No cylinder face selected</span>"))
+                f"<b>{tr('Threaded Rod')}</b><br>"
+                f"<span style='color:#cc8800;'>{tr('No cylinder face selected')}</span>"))
 
         layout.addSpacing(8)
 
-        # Thread type
         t = QtGui.QHBoxLayout()
-        t.addWidget(QtGui.QLabel("Standard:"))
+        t.addWidget(QtGui.QLabel(tr("Standard:")))
         self.type_combo = QtGui.QComboBox()
-        self.type_combo.addItem("Custom")
+        self.type_combo.addItem(tr("Custom"))
         self.type_combo.addItem("ISO Metric Coarse")
         self.type_combo.addItem("ISO Metric Fine")
         t.addWidget(self.type_combo)
         t.addStretch()
         layout.addLayout(t)
 
-        # Thread size
         s = QtGui.QHBoxLayout()
-        self.size_label = QtGui.QLabel("Size:")
+        self.size_label = QtGui.QLabel(tr("Size:"))
         s.addWidget(self.size_label)
         self.size_combo = QtGui.QComboBox()
         self.size_combo.setMinimumWidth(200)
@@ -106,13 +105,12 @@ class ThreadedRodTaskPanel:
         s.addStretch()
         layout.addLayout(s)
 
-        # Custom params
         self.custom_widget = QtGui.QWidget()
         cl = QtGui.QVBoxLayout()
         cl.setContentsMargins(0, 0, 0, 0)
 
         d = QtGui.QHBoxLayout()
-        d.addWidget(QtGui.QLabel("Nominal dia. (mm):"))
+        d.addWidget(QtGui.QLabel(tr("Nominal dia. (mm):")))
         self.diam_spin = QtGui.QDoubleSpinBox()
         self.diam_spin.setRange(1.0, 300.0)
         self.diam_spin.setDecimals(3)
@@ -121,7 +119,7 @@ class ThreadedRodTaskPanel:
         cl.addLayout(d)
 
         p = QtGui.QHBoxLayout()
-        p.addWidget(QtGui.QLabel("Pitch (mm):"))
+        p.addWidget(QtGui.QLabel(tr("Pitch (mm):")))
         self.pitch_spin = QtGui.QDoubleSpinBox()
         self.pitch_spin.setRange(0.1, 20.0)
         self.pitch_spin.setDecimals(2)
@@ -132,9 +130,8 @@ class ThreadedRodTaskPanel:
         self.custom_widget.setLayout(cl)
         layout.addWidget(self.custom_widget)
 
-        # Thread length
         l = QtGui.QHBoxLayout()
-        l.addWidget(QtGui.QLabel("Thread length (mm):"))
+        l.addWidget(QtGui.QLabel(tr("Thread length (mm):")))
         self.len_spin = QtGui.QDoubleSpinBox()
         self.len_spin.setRange(0.1, 9999.0)
         self.len_spin.setDecimals(2)
@@ -142,9 +139,8 @@ class ThreadedRodTaskPanel:
         l.addWidget(self.len_spin)
         layout.addLayout(l)
 
-        # Start offset
         o = QtGui.QHBoxLayout()
-        o.addWidget(QtGui.QLabel("Start offset (mm):"))
+        o.addWidget(QtGui.QLabel(tr("Start offset (mm):")))
         self.offset_spin = QtGui.QDoubleSpinBox()
         self.offset_spin.setRange(-9999.0, 9999.0)
         self.offset_spin.setDecimals(2)
@@ -152,12 +148,11 @@ class ThreadedRodTaskPanel:
         o.addWidget(self.offset_spin)
         layout.addLayout(o)
 
-        # Handedness
         h = QtGui.QHBoxLayout()
-        h.addWidget(QtGui.QLabel("Direction:"))
+        h.addWidget(QtGui.QLabel(tr("Direction:")))
         self.handed_combo = QtGui.QComboBox()
-        self.handed_combo.addItem("Right-hand (standard)")
-        self.handed_combo.addItem("Left-hand")
+        self.handed_combo.addItem(tr("Right-hand (standard)"))
+        self.handed_combo.addItem(tr("Left-hand"))
         h.addWidget(self.handed_combo)
         h.addStretch()
         layout.addLayout(h)
@@ -322,4 +317,4 @@ def _do_create_threaded(face_info, params):
             f"length={params['thread_length']:.2f} mm\n")
     except Exception as e:
         doc.abortTransaction()
-        QtGui.QMessageBox.critical(None, "Thread failed", str(e))
+        QtGui.QMessageBox.critical(None, tr("Thread failed"), str(e))
