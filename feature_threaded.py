@@ -315,6 +315,8 @@ class ThreadedRod:
 
     def onChanged(self, obj, prop):
         if prop in ("NominalDiameter", "Pitch", "ThreadLength", "LeftHanded", "StartOffset"):
+            if obj.Name in ThreadedRod._rebuilding:
+                return
             from PySide import QtCore
             old = ThreadedRod._rebuild_timers.get(obj.Name)
             if old:
