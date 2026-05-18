@@ -65,40 +65,12 @@ def _inject_into_partdesign(wb_name):
         mw = Gui.getMainWindow()
         for tb in mw.findChildren(QtGui.QToolBar):
             title = tb.windowTitle()
+            FreeCAD.Console.PrintMessage(f"DBG toolbar: '{title}', actions={tb.actions()}\n")
             if not title or "Part" not in title:
                 continue
             for a in tb.actions():
-                name = a.objectName()
-                if name == "PartDesign_Chamfer":
-                    btn = tb.widgetForAction(a)
-                    if btn:
-                        if not btn.menu():
-                            menu = QtGui.QMenu(btn)
-                            btn.setMenu(menu)
-                            btn.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
-                        menu = btn.menu()
-                        if menu:
-                            menu.addSeparator()
-                            ci = Gui.getCommand("PartDesign_FullChamfer").getInfo()
-                            act = menu.addAction(ci["MenuText"])
-                            act.setToolTip(ci.get("ToolTip", ""))
-                            act.triggered.connect(lambda c=False: Gui.runCommand("PartDesign_FullChamfer"))
-                elif name == "PartDesign_Fillet":
-                    btn = tb.widgetForAction(a)
-                    if btn:
-                        if not btn.menu():
-                            menu = QtGui.QMenu(btn)
-                            btn.setMenu(menu)
-                            btn.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
-                        menu = btn.menu()
-                        if menu:
-                            menu.addSeparator()
-                            ci = Gui.getCommand("PartDesign_FullFillet").getInfo()
-                            act = menu.addAction(ci["MenuText"])
-                            act.setToolTip(ci.get("ToolTip", ""))
-                            act.triggered.connect(lambda c=False: Gui.runCommand("PartDesign_FullFillet"))
+                FreeCAD.Console.PrintMessage(f"DBG action: name='{a.objectName()}' text='{a.text()}'\n")
             break
-        FreeCAD.Console.PrintMessage("FreeCadPlus: dropdowns injected\n")
     except Exception as e:
         FreeCAD.Console.PrintWarning(f"FreeCadPlus: {e}\n")
 
