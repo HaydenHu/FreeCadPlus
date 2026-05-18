@@ -311,6 +311,7 @@ def _do_create_threaded(face_info, params):
             source_obj=source_obj, face_name=face_name)
         feature_threaded.ViewProviderThreadedRod(fp_obj.ViewObject)
         doc.recompute()
+        Gui.Selection.clearSelection()
         Gui.Selection.addSelection(fp_obj)
         doc.commitTransaction()
         App.Console.PrintMessage(
