@@ -6,7 +6,6 @@ import Part
 from FreeCAD import Vector
 import math
 
-# Standard metric coarse thread: (nominal diameter, pitch)
 METRIC_THREADS = {
     "M2":   (2.0,  0.40),  "M2.5": (2.5,  0.45),  "M3":   (3.0,  0.50),
     "M4":   (4.0,  0.70),  "M5":   (5.0,  0.80),  "M6":   (6.0,  1.00),
@@ -22,7 +21,6 @@ METRIC_THREADS = {
 
 
 def get_cylindrical_face_info(face):
-    """Extract radius, axis, height from a cylindrical face."""
     surf = face.Surface
     if not hasattr(surf, 'Radius'):
         return None
@@ -46,7 +44,6 @@ def get_cylindrical_face_info(face):
 
 
 def suggest_thread(radius):
-    """Suggest closest standard metric thread."""
     best_key = None
     best_diff = float('inf')
     for key, (nom_d, pitch) in METRIC_THREADS.items():
@@ -60,7 +57,6 @@ def suggest_thread(radius):
 
 
 def _get_thread_size_index(hole_obj, thread_type, nom_d, pitch):
-    """Find the best matching ThreadSize index in Hole's enumeration."""
     hole_obj.ThreadType = thread_type
     sizes = hole_obj.getEnumerationsOfProperty("ThreadSize")
     best = None
@@ -85,7 +81,7 @@ def _get_thread_size_index(hole_obj, thread_type, nom_d, pitch):
 
 
 def build_cutter_body(doc, nom_diameter, pitch, thread_length, handedness):
-    """Build a thread cutter body using PartDesign Hole. Returns (name, body)."""
+    """Build a thread cutter body. Returns (name, body)."""
     cutter_radius = nom_diameter / 2.0 + max(pitch * 2, 5.0)
     body = doc.addObject("PartDesign::Body", "_ThreadCutterBody")
     body.Label = ""
@@ -165,7 +161,6 @@ class ThreadedRod:
     def __init__(self, obj, nom_diameter=6.0, pitch=1.0, thread_length=10.0,
                  left_handed=False, start_offset=0.0,
                  source_obj=None, face_name=None):
-        # Properties MUST be added before setting Proxy
         if not hasattr(obj, 'NominalDiameter'):
             obj.addProperty('App::PropertyLength', 'NominalDiameter',
                 'Thread', 'Nominal thread diameter')
@@ -183,13 +178,13 @@ class ThreadedRod:
                 'Thread', 'Start offset. Negative = inward')
         if not hasattr(obj, 'BaseCylinder'):
             obj.addProperty('App::PropertyLink', 'BaseCylinder',
-                'Thread', 'Object containing the cylindrical face')
+                'Thread', 'Object with cylindrical face')
         if not hasattr(obj, 'CylinderFace'):
             obj.addProperty('App::PropertyString', 'CylinderFace',
                 'Thread', 'Cylindrical face name')
         if not hasattr(obj, '_CutterBodyName'):
             obj.addProperty('App::PropertyString', '_CutterBodyName',
-                'Internal', 'Internal cutter body name')
+                'Internal', 'Cutter body')._CutterBodyName = ''
 
         obj.Proxy = self
         obj.NominalDiameter = nom_diameter
@@ -212,51 +207,16 @@ class ThreadedRod:
     def loads(self, state):
         pass
 
-    def _get_or_create_cutter(self, obj, doc, nom_d, pitch, length, handedness):
-        """Get existing cutter body or create a new one."""
-        existing_name = obj._CutterBodyName
-        if existing_name and doc.getObject(existing_name):
-            body = doc.getObject(existing_name)
-            try:
-                hole = None
-                for o in body.Group:
-                    if o.TypeId == 'PartDesign::Hole':
-                        hole = o
-                        break
-                if hole:
-                    hole.Depth = length + pitch * 1.5
-                    hole.ThreadDirection = 1 if handedness else 0
-                    idx = _get_thread_size_index(hole, 1, nom_d, pitch)
-                    if idx is not None:
-                        hole.ThreadSize = idx
-                    doc.recompute()
-                return existing_name, body
-            except Exception:
-                pass
-
-        if existing_name:
-            old = doc.getObject(existing_name)
-            if old:
-                doc.removeObject(existing_name)
-
-        name, body = build_cutter_body(doc, nom_d, pitch, length, handedness)
-        body.Visibility = False
-        for o in body.Group:
-            o.Visibility = False
-        return name, body
-
     def execute(self, obj):
         if obj.BaseCylinder is None or not obj.CylinderFace:
             return
 
         source_obj = obj.BaseCylinder
-        face_name = obj.CylinderFace
-
         if not hasattr(source_obj, 'Shape'):
             return
 
         try:
-            face = source_obj.Shape.getElement(face_name)
+            face = source_obj.Shape.getElement(obj.CylinderFace)
         except Exception:
             return
 
@@ -268,13 +228,17 @@ class ThreadedRod:
         nom_d = obj.NominalDiameter
         pitch = obj.Pitch
         thread_length = obj.ThreadLength
-        handedness = obj.LeftHanded
         start_offset = obj.StartOffset
 
-        cutter_name, cutter_body = self._get_or_create_cutter(
-            obj, doc, nom_d, pitch, thread_length, handedness)
-        obj._CutterBodyName = cutter_name
+        # Get or create cutter body ONCE (creation already happened in task panel)
+        existing_name = obj._CutterBodyName
+        cutter_body = doc.getObject(existing_name) if existing_name else None
 
+        if cutter_body is None:
+            obj._CutterBodyName = ''
+            return
+
+        # Position the cutter body
         axis = cyl_info['axis']
         start_pt = cyl_info['axis_start']
         z_axis = Vector(0, 0, 1)
@@ -292,8 +256,8 @@ class ThreadedRod:
         twist = App.Rotation(axis, 37.5)
         placement.Rotation = twist.multiply(placement.Rotation)
         cutter_body.Placement = placement
-        doc.recompute()
 
+        # Boolean cut with the source object's shape
         result_shape = source_obj.Shape.cut(cutter_body.Shape)
         if result_shape is None or result_shape.isNull():
             raise RuntimeError("Boolean cut failed. Check thread diameter.")
@@ -306,8 +270,6 @@ class ThreadedRod:
 
 
 class ViewProviderThreadedRod:
-    """ViewProvider for ThreadedRod."""
-
     def __init__(self, vobj):
         vobj.Proxy = self
 
@@ -324,9 +286,7 @@ class ViewProviderThreadedRod:
         import os
         path = os.path.join(os.path.dirname(__file__),
             'Resources', 'icons', 'ThreadedRod.svg')
-        if os.path.exists(path):
-            return path
-        return ''
+        return path if os.path.exists(path) else ''
 
     def attach(self, vobj):
         self.Object = vobj.Object

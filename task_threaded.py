@@ -297,6 +297,15 @@ def _do_create_threaded(face_info, params):
 
     doc.openTransaction("Threaded Rod")
     try:
+        # Create cutter body FIRST (before FeaturePython, outside recompute chain)
+        cutter_name, cutter_body = feature_threaded.build_cutter_body(
+            doc, params['nom_diameter'], params['pitch'],
+            params['thread_length'], params['left_handed'])
+        cutter_body.Visibility = False
+        for o in cutter_body.Group:
+            o.Visibility = False
+
+        # Create FeaturePython
         if body:
             fp_obj = body.newObject('PartDesign::FeaturePython', 'ThreadedRod')
             source_obj.Visibility = False
@@ -309,6 +318,7 @@ def _do_create_threaded(face_info, params):
             left_handed=params['left_handed'],
             start_offset=params['start_offset'],
             source_obj=source_obj, face_name=face_name)
+        fp_obj._CutterBodyName = cutter_name
         feature_threaded.ViewProviderThreadedRod(fp_obj.ViewObject)
         doc.recompute()
         Gui.Selection.clearSelection()
