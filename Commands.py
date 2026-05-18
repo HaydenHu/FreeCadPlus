@@ -9,6 +9,8 @@ import task_fillet
 import task_threaded
 import feature_threaded
 
+translate = App.Qt.translate
+
 
 class cmdFullChamfer:
     """Command: Full Chamfer on selected edges."""
@@ -19,8 +21,8 @@ class cmdFullChamfer:
             'Resources', 'icons', 'FullChamfer.svg')
         return {
             'Pixmap': path if os.path.exists(path) else '',
-            'MenuText': 'Full Chamfer',
-            'ToolTip': 'Create a parametric full chamfer on selected edges',
+            'MenuText': translate("FreeCadPlus", "Full Chamfer"),
+            'ToolTip': translate("FreeCadPlus", "Create a parametric full chamfer on selected edges"),
         }
 
     def IsActive(self):
@@ -63,8 +65,8 @@ class cmdFullFillet:
             'Resources', 'icons', 'FullFillet.svg')
         return {
             'Pixmap': path if os.path.exists(path) else '',
-            'MenuText': 'Full Fillet',
-            'ToolTip': 'Create a parametric full fillet on selected edges',
+            'MenuText': translate("FreeCadPlus", "Full Fillet"),
+            'ToolTip': translate("FreeCadPlus", "Create a parametric full fillet on selected edges"),
         }
 
     def IsActive(self):
@@ -107,8 +109,8 @@ class cmdThreadedRod:
             'Resources', 'icons', 'ThreadedRod.svg')
         return {
             'Pixmap': path if os.path.exists(path) else '',
-            'MenuText': 'Threaded Rod',
-            'ToolTip': 'Create a parametric external thread on a cylinder',
+            'MenuText': translate("FreeCadPlus", "Threaded Rod"),
+            'ToolTip': translate("FreeCadPlus", "Create a parametric external thread on a cylinder"),
         }
 
     def IsActive(self):
