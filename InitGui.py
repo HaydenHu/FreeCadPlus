@@ -34,14 +34,15 @@ def _inject(wb_name):
         return
     from PySide import QtGui
     import FreeCADGui as Gui
+    from i18n import tr
     # Inline mapping to avoid FreeCAD scoping issues
     injections = {
         "Part Design Dress-Up Features": {
-            "PartDesign_Chamfer": ("PartDesign_FullChamfer", "Full Chamfer", "Create a parametric full chamfer on selected edges"),
-            "PartDesign_Fillet": ("PartDesign_FullFillet", "Full Fillet", "Create a parametric full fillet on selected edges"),
+            "PartDesign_Chamfer": ("PartDesign_FullChamfer", tr("Full Chamfer"), tr("Create a parametric full chamfer on selected edges")),
+            "PartDesign_Fillet": ("PartDesign_FullFillet", tr("Full Fillet"), tr("Create a parametric full fillet on selected edges")),
         },
         "Part Design Modeling Features": {
-            "PartDesign_Hole": ("PartDesign_ThreadedRod", "Threaded Rod", "Create a parametric external thread on a cylinder"),
+            "PartDesign_Hole": ("PartDesign_ThreadedRod", tr("Threaded Rod"), tr("Create a parametric external thread on a cylinder")),
         },
     }
     try:
