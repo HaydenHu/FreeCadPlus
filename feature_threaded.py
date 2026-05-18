@@ -158,6 +158,8 @@ def build_cutter_body(doc, nom_diameter, pitch, thread_length, handedness):
 class ThreadedRod:
     """FeaturePython Proxy for parametric threaded rod."""
 
+    _exec_depth = 0
+
     def __init__(self, obj, nom_diameter=6.0, pitch=1.0, thread_length=10.0,
                  left_handed=False, start_offset=0.0,
                  source_obj=None, face_name=None):
@@ -207,7 +209,18 @@ class ThreadedRod:
     def loads(self, state):
         pass
 
+    _exec_depth = 0
+
     def execute(self, obj):
+        if ThreadedRod._exec_depth > 0:
+            return
+        ThreadedRod._exec_depth += 1
+        try:
+            self._do_execute(obj)
+        finally:
+            ThreadedRod._exec_depth -= 1
+
+    def _do_execute(self, obj):
         if obj.BaseCylinder is None or not obj.CylinderFace:
             return
 
@@ -228,15 +241,30 @@ class ThreadedRod:
         nom_d = obj.NominalDiameter
         pitch = obj.Pitch
         thread_length = obj.ThreadLength
+        handedness = obj.LeftHanded
         start_offset = obj.StartOffset
 
-        # Get or create cutter body ONCE (creation already happened in task panel)
-        existing_name = obj._CutterBodyName
-        cutter_body = doc.getObject(existing_name) if existing_name else None
+        # Rebuild cutter body (handles parameter changes)
+        old_name = obj._CutterBodyName
+        try:
+            new_name, cutter_body = build_cutter_body(
+                doc, nom_d, pitch, thread_length, handedness)
+        except Exception as e:
+            raise RuntimeError(f"Cutter build failed: {e}")
 
-        if cutter_body is None:
-            obj._CutterBodyName = ''
-            return
+        # Clean up old cutter body
+        if old_name:
+            old = doc.getObject(old_name)
+            if old and old.Name != new_name:
+                try:
+                    doc.removeObject(old_name)
+                except Exception:
+                    pass
+
+        obj._CutterBodyName = new_name
+        cutter_body.Visibility = False
+        for o in cutter_body.Group:
+            o.Visibility = False
 
         # Position the cutter body
         axis = cyl_info['axis']
