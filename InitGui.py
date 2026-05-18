@@ -85,18 +85,21 @@ def _inject_into_partdesign(wb_name):
                         btn.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
                     else:
                         menu = existing_menu
+                    # Get command info from our Commands module
+                    if our_cmd == "PartDesign_FullChamfer":
+                        ci = {"MenuText": "Full Chamfer", "ToolTip": "Create a parametric full chamfer on selected edges"}
+                    else:
+                        ci = {"MenuText": "Full Fillet", "ToolTip": "Create a parametric full fillet on selected edges"}
                     # Skip if already added
                     already = False
                     for ma in menu.actions():
-                        if ma.objectName() == our_cmd:
+                        if ma.text() == ci["MenuText"]:
                             already = True
                             break
                     if not already:
                         menu.addSeparator()
-                        ci = Gui.getCommand(our_cmd).getInfo()
                         act = menu.addAction(ci["MenuText"])
-                        act.setToolTip(ci.get("ToolTip", ""))
-                        act.setObjectName(our_cmd)
+                        act.setToolTip(ci["ToolTip"])
                         act.triggered.connect(lambda c=False, cmd=our_cmd: Gui.runCommand(cmd))
                         FreeCAD.Console.PrintMessage(f"DBG: added {our_cmd} to menu\n")
             break
