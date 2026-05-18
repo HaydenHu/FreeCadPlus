@@ -54,7 +54,6 @@ def _inject_into_partdesign(wb_name):
         return
     from PySide import QtGui
     import FreeCADGui as Gui
-    import FreeCAD
     try:
         mw = Gui.getMainWindow()
         for tb in mw.findChildren(QtGui.QToolBar):
@@ -62,10 +61,8 @@ def _inject_into_partdesign(wb_name):
                 continue
             for a in tb.actions():
                 name = a.objectName()
-                FreeCAD.Console.PrintMessage(f"DBG: action {name} text='{a.text()}'\n")
                 if name in ("PartDesign_Chamfer", "PartDesign_Fillet"):
                     btn = tb.widgetForAction(a)
-                    FreeCAD.Console.PrintMessage(f"DBG: btn={btn} type={type(btn).__name__ if btn else 'None'}\n")
                     if btn is None:
                         continue
                     our_cmd = ("PartDesign_FullChamfer" if name == "PartDesign_Chamfer"
@@ -75,8 +72,7 @@ def _inject_into_partdesign(wb_name):
                     if menu is None:
                         menu = QtGui.QMenu()
                         a.setMenu(menu)
-                    # Remove width override, enlarge arrow click area
-                    btn.setStyleSheet("QToolButton::menu-button { width: 18px; margin-left: 2px; }")
+                    # Let Qt handle the layout - no custom styling
                     # Get command info
                     if our_cmd == "PartDesign_FullChamfer":
                         ci = {"MenuText": "Full Chamfer", "ToolTip": "Create a parametric full chamfer on selected edges"}
