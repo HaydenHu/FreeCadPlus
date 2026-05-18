@@ -311,9 +311,8 @@ def _do_create_threaded(face_info, params):
             source_obj=source_obj, face_name=face_name)
         feature_threaded.ViewProviderThreadedRod(fp_obj.ViewObject)
         doc.recompute()
-        Gui.Selection.clearSelection()
-        Gui.Selection.addSelection(doc.Name, fp_obj.Name)
         doc.commitTransaction()
+        doc.ActiveObject = fp_obj
         App.Console.PrintMessage(
             f"ThreadedRod: M{params['nom_diameter']:.0f}x{params['pitch']:.2f}, "
             f"length={params['thread_length']:.2f} mm\n")
