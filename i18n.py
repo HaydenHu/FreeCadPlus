@@ -49,13 +49,38 @@ _zh = {
 
 def _is_chinese():
     try:
+        # Method 1: FreeCAD locale
         loc = App.getLocale()
-        return loc and loc.lower().startswith("zh")
+        if loc and "zh" in loc.lower():
+            return True
     except Exception:
-        return False
+        pass
+    try:
+        # Method 2: user preference
+        p = App.ParamGet("User parameter:BaseApp/Preferences/General")
+        lang = p.GetString("Language", "")
+        if "Chinese" in lang or "zh" in lang.lower():
+            return True
+    except Exception:
+        pass
+    try:
+        # Method 3: Qt locale
+        from PySide import QtCore
+        loc = QtCore.QLocale.system().name()
+        if "zh" in loc.lower():
+            return True
+    except Exception:
+        pass
+    return False
 
+
+_chinese = None
 
 def tr(text):
-    if _is_chinese() and text in _zh:
+    global _chinese
+    if _chinese is None:
+        _chinese = _is_chinese()
+        App.Console.PrintMessage(f"FreeCadPlus i18n: Chinese={_chinese}\n")
+    if _chinese and text in _zh:
         return _zh[text]
     return text
