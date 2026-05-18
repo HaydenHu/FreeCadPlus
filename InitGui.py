@@ -59,9 +59,13 @@ _INJECTED = False
 
 def _find_tool_button(toolbar, cmd_internal):
     """Find QToolButton for a command in the toolbar."""
+    import FreeCAD
     for a in toolbar.actions():
         if a.objectName() == cmd_internal:
-            return toolbar.widgetForAction(a)
+            w = toolbar.widgetForAction(a)
+            FreeCAD.Console.PrintMessage(f"FreeCadPlus: found button for {cmd_internal}, widget={w}\n")
+            return w
+    FreeCAD.Console.PrintMessage(f"FreeCadPlus: no action named {cmd_internal}\n")
     return None
 
 
@@ -102,20 +106,31 @@ def _do_inject():
     import FreeCADGui
     try:
         mw = FreeCADGui.getMainWindow()
+        found_tb = False
         for tb in mw.findChildren(QtGui.QToolBar):
             title = tb.windowTitle()
+            FreeCAD.Console.PrintMessage(f"FreeCadPlus: found toolbar '{title}'\n")
             if not title or "Part" not in title:
                 continue
-            if _add_dropdown(tb, "PartDesign_Chamfer", "PartDesign_FullChamfer"):
-                FreeCAD.Console.PrintMessage("FreeCadPlus: FullChamfer added to Chamfer dropdown\n")
-            if _add_dropdown(tb, "PartDesign_Fillet", "PartDesign_FullFillet"):
-                FreeCAD.Console.PrintMessage("FreeCadPlus: FullFillet added to Fillet dropdown\n")
+            found_tb = True
+            # Print all actions for debugging
+            for a in tb.actions():
+                if a.objectName():
+                    FreeCAD.Console.PrintMessage(f"  action: {a.objectName()} text='{a.text()}'\n")
+            r1 = _add_dropdown(tb, "PartDesign_Chamfer", "PartDesign_FullChamfer")
+            r2 = _add_dropdown(tb, "PartDesign_Fillet", "PartDesign_FullFillet")
+            FreeCAD.Console.PrintMessage(f"FreeCadPlus: Chamfer={r1} Fillet={r2}\n")
+            break
+        if not found_tb:
+            FreeCAD.Console.PrintWarning("FreeCadPlus: no PartDesign toolbar found\n")
         _INJECTED = True
     except Exception as e:
         FreeCAD.Console.PrintWarning(f"FreeCadPlus: injection failed: {e}\n")
 
 
 def _inject_into_partdesign(wb_name):
+    import FreeCAD
+    FreeCAD.Console.PrintMessage(f"FreeCadPlus: workbench activated: {wb_name}\n")
     if "PartDesign" not in wb_name:
         return
     from PySide import QtCore
