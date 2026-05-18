@@ -213,13 +213,12 @@ class ThreadedRod:
         pass
 
     def _rebuild_cutter(self, obj):
-        """Rebuild the cutter body (called from timer, outside recompute)."""
+        """Update or create the cutter body (called from timer, outside recompute)."""
         if obj.Name in ThreadedRod._rebuilding:
             return
         ThreadedRod._rebuilding.add(obj.Name)
         try:
             doc = obj.Document
-            # Convert Quantity to float for build_cutter_body
             nd = obj.NominalDiameter
             pt = obj.Pitch
             nom_d = nd.Value if hasattr(nd, 'Value') else nd
@@ -227,21 +226,76 @@ class ThreadedRod:
             tl = obj.ThreadLength
             length = tl.Value if hasattr(tl, 'Value') else tl
             handed = obj.LeftHanded
+            cutter_r = nom_d / 2.0 + max(pitch * 2, 5.0)
 
-            # Remove all old cutter bodies (iterate by name, handle deletions)
-            to_remove = [o.Name for o in doc.Objects if o and hasattr(o, 'Name') and o.Name.startswith("_ThreadCutterBody")]
-            for n in to_remove:
-                try:
-                    doc.removeObject(n)
-                except Exception:
-                    pass
+            # Get or create a persistent cutter body (reuse same name)
+            body = doc.getObject("_ThreadCutter")
+            if body is None:
+                body = doc.addObject("PartDesign::Body", "_ThreadCutter")
+                body.Label = ""
+            # Get or create cylinder
+            cyl = doc.getObject("_CutterBase")
+            if cyl is None:
+                cyl = doc.addObject("PartDesign::AdditiveCylinder", "_CutterBase")
+                cyl.Label = ""
+                body.addObject(cyl)
+            cyl.Radius = cutter_r
+            cyl.Height = length
+            cyl.Angle = 360
 
-            # Build new one
-            name, body = build_cutter_body(doc, nom_d, pitch, length, handed)
+            import Sketcher
+            sketch = doc.getObject("_CutterSketch")
+            if sketch is None:
+                sketch = doc.addObject("Sketcher::SketchObject", "_CutterSketch")
+                sketch.Label = ""
+                body.addObject(sketch)
+                sketch.AttachmentSupport = (cyl, "Face2")
+                sketch.MapMode = "FlatFace"
+                geo_list = [Part.Circle()]
+                geo_list[0].Radius = nom_d / 2.0
+                sketch.addGeometry(geo_list, False)
+                sketch.addConstraint(Sketcher.Constraint("Coincident", 0, 3, -1, 1))
+
+            # Get or create hole
+            hole = doc.getObject("_CutterHole")
+            if hole is None:
+                hole = doc.addObject("PartDesign::Hole", "_CutterHole")
+                hole.Label = ""
+                body.addObject(hole)
+                hole.Profile = sketch
+                hole.Diameter = nom_d
+                hole.DepthType = 0
+                hole.DrillPoint = 0
+                hole.Threaded = 1
+                hole.ModelThread = 1
+                hole.ThreadDepthType = 0
+                hole.ThreadDirection = 1 if handed else 0
+                hole.ThreadClass = 0
+                hole.HoleCutType = 0
+                hole.Tapered = 0
+                hole.Reversed = 0
+                hole.Refine = True
+                # Set thread size once
+                idx = _get_thread_size_index(hole, 1, nom_d, pitch)
+                if idx is not None:
+                    hole.ThreadType = 1; hole.ThreadSize = idx
+                else:
+                    idx = _get_thread_size_index(hole, 2, nom_d, pitch)
+                    if idx is not None:
+                        hole.ThreadType = 2; hole.ThreadSize = idx
+            else:
+                # Update existing hole parameters
+                hole.Diameter = nom_d
+                hole.Depth = length + pitch * 1.5
+                # ThreadType and size may need update if thread changed
+                old_size = hole.ThreadSize if hasattr(hole, 'ThreadSize') else None
+                if old_size is not None:
+                    hole.ThreadSize = old_size
+
             body.Visibility = False
-            for o in body.Group:
-                o.Visibility = False
-            obj._CutterBodyName = name
+            obj._CutterBodyName = body.Name
+            body.touch()
+            doc.recompute()
 
             # Reposition
             face = obj.BaseCylinder.Shape.getElement(obj.CylinderFace)
