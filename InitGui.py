@@ -26,29 +26,6 @@ for g in pd_toolbars.GetGroups():
         pd_toolbars.RemGroup(g)
         break
 
-# Dropdown injection mapping: toolbar window title → { builtin_cmd: (our_cmd, text, tip) }
-INJECTIONS = {
-    "Part Design Dress-Up Features": {
-        "PartDesign_Chamfer": (
-            "PartDesign_FullChamfer",
-            "Full Chamfer",
-            "Create a parametric full chamfer on selected edges",
-        ),
-        "PartDesign_Fillet": (
-            "PartDesign_FullFillet",
-            "Full Fillet",
-            "Create a parametric full fillet on selected edges",
-        ),
-    },
-    "Part Design Modeling Features": {
-        "PartDesign_Hole": (
-            "PartDesign_ThreadedRod",
-            "Threaded Rod",
-            "Create a parametric external thread on a cylinder",
-        ),
-    },
-}
-
 _INJECTED = False
 
 def _inject(wb_name):
@@ -57,13 +34,23 @@ def _inject(wb_name):
         return
     from PySide import QtGui
     import FreeCADGui as Gui
+    # Inline mapping to avoid FreeCAD scoping issues
+    injections = {
+        "Part Design Dress-Up Features": {
+            "PartDesign_Chamfer": ("PartDesign_FullChamfer", "Full Chamfer", "Create a parametric full chamfer on selected edges"),
+            "PartDesign_Fillet": ("PartDesign_FullFillet", "Full Fillet", "Create a parametric full fillet on selected edges"),
+        },
+        "Part Design Modeling Features": {
+            "PartDesign_Hole": ("PartDesign_ThreadedRod", "Threaded Rod", "Create a parametric external thread on a cylinder"),
+        },
+    }
     try:
         mw = Gui.getMainWindow()
         for tb in mw.findChildren(QtGui.QToolBar):
             ttl = tb.windowTitle()
-            if ttl not in INJECTIONS:
+            if ttl not in injections:
                 continue
-            cmds = INJECTIONS[ttl]
+            cmds = injections[ttl]
             for a in tb.actions():
                 name = a.objectName()
                 if name not in cmds:
