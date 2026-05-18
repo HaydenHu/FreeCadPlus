@@ -64,6 +64,7 @@ def _inject(wb_name):
                 if menu is None:
                     menu = QtGui.QMenu()
                     a.setMenu(menu)
+                menu.setToolTipsVisible(True)
                 # Button layout
                 btn.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
                 w = btn.iconSize().width()
@@ -81,6 +82,7 @@ def _inject(wb_name):
                 icon_path = _os.path.join(icon_dir, icon_file)
                 act = menu.addAction(QtGui.QIcon(icon_path), txt) if _os.path.exists(icon_path) else menu.addAction(txt)
                 act.setToolTip(tip)
+                act.setStatusTip(tip)
                 act.triggered.connect(lambda c=False, cmd=our: Gui.runCommand(cmd))
         _INJECTED = True
     except Exception as e:
