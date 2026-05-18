@@ -263,7 +263,9 @@ class ThreadedRod:
             raise RuntimeError("Boolean cut failed. Check thread diameter.")
 
         obj.Shape = result_shape
-        obj.Label = f"ThreadedRod_M{nom_d:.0f}x{pitch:.2f}"
+        nd = nom_d.Value if hasattr(nom_d, 'Value') else nom_d
+        pt = pitch.Value if hasattr(pitch, 'Value') else pitch
+        obj.Label = f"ThreadedRod_M{nd:.0f}x{pt:.2f}"
 
     def onChanged(self, obj, prop):
         pass
