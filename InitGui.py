@@ -2,7 +2,6 @@
 
 import FreeCAD
 import FreeCADGui
-from PySide import QtGui, QtCore
 import Commands
 
 # Register all three commands globally
@@ -17,11 +16,6 @@ class FreeCADPlusWorkbench:
     pass
 
 # Register ThreadedRod as a standalone toolbar button
-cmds = [
-    "PartDesign_FullChamfer",
-    "PartDesign_FullFillet",
-    "PartDesign_ThreadedRod",
-]
 tbname = "FreeCadPlus"
 
 pd_toolbars = FreeCAD.ParamGet(
@@ -42,9 +36,9 @@ found = False
 for g in pd_toolbars.GetGroups():
     tb = pd_toolbars.GetGroup(g)
     if tb.GetString("Name") == tbname:
-        for cmd in cmds:
-            if tb.GetString(cmd) == "":
-                tb.SetString(cmd, "FreeCadPlus")
+        # Only ThreadedRod in standalone toolbar (Chamfer/Fillet are dropdowns)
+        if tb.GetString("PartDesign_ThreadedRod") == "":
+            tb.SetString("PartDesign_ThreadedRod", "FreeCadPlus")
         found = True
         break
 if not found:
@@ -60,17 +54,33 @@ def _inject_into_partdesign(wb_name):
         return
     from PySide import QtGui
     import FreeCADGui as Gui
-    import FreeCAD
     try:
         mw = Gui.getMainWindow()
         for tb in mw.findChildren(QtGui.QToolBar):
-            title = tb.windowTitle()
-            FreeCAD.Console.PrintMessage(f"DBG toolbar: '{title}', actions={tb.actions()}\n")
-            if not title or "Part" not in title:
+            if tb.windowTitle() != "Part Design Dress-Up Features":
                 continue
             for a in tb.actions():
-                FreeCAD.Console.PrintMessage(f"DBG action: name='{a.objectName()}' text='{a.text()}'\n")
+                name = a.objectName()
+                if name in ("PartDesign_Chamfer", "PartDesign_Fillet"):
+                    btn = tb.widgetForAction(a)
+                    if btn is None:
+                        continue
+                    our_cmd = ("PartDesign_FullChamfer" if name == "PartDesign_Chamfer"
+                               else "PartDesign_FullFillet")
+                    if btn.menu() is None:
+                        menu = QtGui.QMenu(btn)
+                        btn.setMenu(menu)
+                        btn.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
+                    menu = btn.menu()
+                    if menu:
+                        menu.addSeparator()
+                        ci = Gui.getCommand(our_cmd).getInfo()
+                        act = menu.addAction(ci["MenuText"])
+                        act.setToolTip(ci.get("ToolTip", ""))
+                        act.triggered.connect(lambda c=False, cmd=our_cmd: Gui.runCommand(cmd))
+            break
     except Exception as e:
+        import FreeCAD
         FreeCAD.Console.PrintWarning(f"FreeCadPlus: {e}\n")
 
 
