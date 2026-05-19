@@ -65,7 +65,7 @@ def _inject(wb_name):
                     menu = QtGui.QMenu()
                     a.setMenu(menu)
                 menu.setToolTipsVisible(True)
-                menu.setIconSize(QtCore.QSize(24, 24))
+                menu.setStyleSheet("QMenu { icon-size: 24px; }")
                 # Button layout
                 btn.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
                 w = btn.iconSize().width()
