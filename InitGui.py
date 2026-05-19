@@ -69,10 +69,10 @@ def _inject(wb_name):
                 # Button layout
                 btn.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
                 w = btn.iconSize().width()
-                btn.setMinimumWidth(int(w * 2))
+                btn.setMinimumWidth(int(w * 1.8))
                 btn.setStyleSheet(
-                    "QToolButton { padding-right: 14px; } "
-                    "QToolButton::menu-button { width: 14px; subcontrol-position: right; } "
+                    "QToolButton { padding-right: 16px; } "
+                    "QToolButton::menu-button { width: 16px; subcontrol-position: right; } "
                     "QToolButton::menu-arrow { width: 14px; height: 14px; margin-left: 1px; padding-right: 5px; }")
                 if any(ma.text() == txt for ma in menu.actions()):
                     continue
