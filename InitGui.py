@@ -32,7 +32,7 @@ def _inject(wb_name):
     global _INJECTED
     if _INJECTED or "PartDesign" not in wb_name:
         return
-    from PySide import QtGui, QtCore
+    from PySide import QtGui
     import FreeCADGui as Gui
     from i18n import tr
     # Inline mapping to avoid FreeCAD scoping issues
