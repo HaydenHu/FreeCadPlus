@@ -67,7 +67,7 @@ def create_fillet_cutter(shape, edge_idx, fillet_radius):
     if face.isNull():
         raise RuntimeError("Cannot create cutter face")
 
-    ext_dist = el + 20
+    ext_dist = el + 0.1
     sweep = face.extrude(ev * ext_dist)
     sweep2 = face.extrude(-ev * ext_dist)
     return sweep.fuse(sweep2)
