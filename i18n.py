@@ -60,6 +60,12 @@ _zh = {
     "Start offset. Negative = inward": "起始偏移. 负值=向内",
     "Object with cylindrical face": "包含圆柱面的对象",
     "Cylindrical face name": "圆柱面名称",
+    # Selection UI
+    "Cylindrical face:": "圆柱面:",
+    "Ref face:": "参考面:",
+    "Not selected": "未选择",
+    "Edges:": "边:",
+    "Select": "选择",
 }
 
 
