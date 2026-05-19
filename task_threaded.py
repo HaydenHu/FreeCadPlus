@@ -240,15 +240,23 @@ class ThreadedRodTaskPanel:
         try:
             if not sub or not sub.startswith("Face"):
                 return
-            f = obj.Shape.getElement(sub)
+            # Find the actual document object (observer gives string names)
+            import FreeCAD as App
+            d = App.getDocument(doc)
+            if d is None:
+                return
+            o = d.getObject(obj)
+            if o is None or not hasattr(o, 'Shape'):
+                return
+            f = o.Shape.getElement(sub)
             ci = feature_threaded.get_cylindrical_face_info(f)
             if ci:
-                ci['face_name'] = sub; ci['obj'] = obj; ci['type'] = 'cylindrical'
+                ci['face_name'] = sub; ci['obj'] = o; ci['type'] = 'cylindrical'
                 self.face_info = ci
                 self._update_cyl_face()
                 self._fill_from_face()
             else:
-                self.ref_face_info = {'face_name': sub, 'obj': obj, 'type': 'reference'}
+                self.ref_face_info = {'face_name': sub, 'obj': o, 'type': 'reference'}
                 self._update_ref_face()
         except RuntimeError: pass
 
