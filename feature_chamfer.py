@@ -4,6 +4,7 @@
 import FreeCAD as App
 import Part
 import pd_utils
+from i18n import tr
 
 
 def create_chamfer_cutter(shape, edge_idx, chamfer_dist):
@@ -80,13 +81,13 @@ class FullChamfer:
         # Properties MUST be added before setting Proxy
         if not hasattr(obj, 'Size'):
             obj.addProperty('App::PropertyLength', 'Size',
-                'Chamfer', 'Chamfer distance')
+                tr('Chamfer'), tr('Chamfer distance'))
         if not hasattr(obj, 'EdgeIndices'):
             obj.addProperty('App::PropertyIntegerList', 'EdgeIndices',
-                'Chamfer', 'Edge indices (0-based)')
+                tr('Chamfer'), tr('Edge indices (0-based)'))
         if not hasattr(obj, 'BaseFeature'):
             obj.addProperty('App::PropertyLink', 'BaseFeature',
-                'Chamfer', 'Reference to the base feature')
+                tr('Chamfer'), tr('Reference to the base feature'))
 
         obj.Proxy = self
         obj.Size = size

@@ -5,6 +5,7 @@ import FreeCAD as App
 import Part
 import math
 import pd_utils
+from i18n import tr
 
 
 def create_fillet_cutter(shape, edge_idx, fillet_radius):
@@ -79,13 +80,13 @@ class FullFillet:
         # Properties MUST be added before setting Proxy
         if not hasattr(obj, 'Radius'):
             obj.addProperty('App::PropertyLength', 'Radius',
-                'Fillet', 'Fillet radius')
+                tr('Fillet'), tr('Fillet radius'))
         if not hasattr(obj, 'EdgeIndices'):
             obj.addProperty('App::PropertyIntegerList', 'EdgeIndices',
-                'Fillet', 'Edge indices (0-based)')
+                tr('Fillet'), tr('Edge indices (0-based)'))
         if not hasattr(obj, 'BaseFeature'):
             obj.addProperty('App::PropertyLink', 'BaseFeature',
-                'Fillet', 'Reference to the base feature')
+                tr('Fillet'), tr('Reference to the base feature'))
 
         obj.Proxy = self
         obj.Radius = radius

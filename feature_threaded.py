@@ -5,6 +5,7 @@ import FreeCAD as App
 import Part
 from FreeCAD import Vector
 import math
+from i18n import tr
 
 METRIC_THREADS = {
     "M2":   (2.0,  0.40),  "M2.5": (2.5,  0.45),  "M3":   (3.0,  0.50),
@@ -167,25 +168,25 @@ class ThreadedRod:
                  cutter_body_name=None):
         if not hasattr(obj, 'NominalDiameter'):
             obj.addProperty('App::PropertyLength', 'NominalDiameter',
-                'Thread', 'Nominal thread diameter')
+                tr('Thread'), tr('Nominal thread diameter'))
         if not hasattr(obj, 'Pitch'):
             obj.addProperty('App::PropertyLength', 'Pitch',
-                'Thread', 'Thread pitch')
+                tr('Thread'), tr('Thread pitch'))
         if not hasattr(obj, 'ThreadLength'):
             obj.addProperty('App::PropertyLength', 'ThreadLength',
-                'Thread', 'Thread length')
+                tr('Thread'), tr('Thread length'))
         if not hasattr(obj, 'LeftHanded'):
             obj.addProperty('App::PropertyBool', 'LeftHanded',
-                'Thread', 'Left-handed thread')
+                tr('Thread'), tr('Left-handed thread'))
         if not hasattr(obj, 'StartOffset'):
             obj.addProperty('App::PropertyFloat', 'StartOffset',
-                'Thread', 'Start offset. Negative = inward')
+                tr('Thread'), tr('Start offset. Negative = inward'))
         if not hasattr(obj, 'BaseCylinder'):
             obj.addProperty('App::PropertyLink', 'BaseCylinder',
-                'Thread', 'Object with cylindrical face')
+                tr('Thread'), tr('Object with cylindrical face'))
         if not hasattr(obj, 'CylinderFace'):
             obj.addProperty('App::PropertyString', 'CylinderFace',
-                'Thread', 'Cylindrical face name')
+                tr('Thread'), tr('Cylindrical face name'))
         if not hasattr(obj, '_CutterBodyName'):
             obj.addProperty('App::PropertyString', '_CutterBodyName',
                 'Internal', 'Cutter body name')._CutterBodyName = ''

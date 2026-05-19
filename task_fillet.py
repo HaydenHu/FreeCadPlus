@@ -70,16 +70,47 @@ class FilletTaskPanel:
         return pd_utils.get_min_adjacent_edge_length(edge, shape), False
 
     def accept(self):
-        Gui.Control.closeDialog()
+        edges = self.edges
+        if not edges and not self.feature_obj:
+            edges = _get_selected_edges()
         radius = self.radius_spin.value()
+        Gui.Control.closeDialog()
         if self.feature_obj:
             self.feature_obj.Radius = radius
             self.feature_obj.Document.recompute()
-        elif self.edges:
-            _do_create_fillet(self.edges, radius)
+        elif edges:
+            _do_create_fillet(edges, radius)
 
     def reject(self):
         Gui.Control.closeDialog()
+
+
+def _get_selected_edges():
+    """Get selected edges from current GUI selection."""
+    edges = []
+    sel = Gui.Selection.getSelectionEx()
+    if not sel:
+        return edges
+    for s in sel:
+        if not hasattr(s.Object, 'Shape'):
+            continue
+        obj = s.Object
+        shape = obj.Shape
+        body = pd_utils.find_body(obj)
+        for sn in s.SubElementNames:
+            if not sn.startswith('Edge'):
+                continue
+            try:
+                idx = int(sn.replace('Edge', '')) - 1
+                edge = shape.Edges[idx]
+                min_l = pd_utils.get_min_adjacent_edge_length(edge, shape)
+                edges.append({
+                    'obj': obj, 'body': body, 'sub': sn,
+                    'idx': idx, 'min_len': min_l, 'edge': edge,
+                })
+            except Exception:
+                pass
+    return edges
 
 
 def _do_create_fillet(edges, radius):

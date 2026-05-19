@@ -270,8 +270,11 @@ class ThreadedRodTaskPanel:
         }
 
     def accept(self):
-        Gui.Control.closeDialog()
+        face_info = self.face_info
+        if not face_info and not self.feature_obj:
+            face_info = _get_selected_face_info()
         params = self._get_params()
+        Gui.Control.closeDialog()
         if self.feature_obj:
             obj = self.feature_obj
             obj.NominalDiameter = params['nom_diameter']
@@ -280,11 +283,32 @@ class ThreadedRodTaskPanel:
             obj.StartOffset = params['start_offset']
             obj.LeftHanded = params['left_handed']
             obj.Document.recompute()
-        elif self.face_info:
-            _do_create_threaded(self.face_info, params)
+        elif face_info:
+            _do_create_threaded(face_info, params)
 
     def reject(self):
         Gui.Control.closeDialog()
+
+
+def _get_selected_face_info():
+    """Get cylindrical face info from current GUI selection."""
+    sel = Gui.Selection.getSelectionEx()
+    for s in sel:
+        if not hasattr(s.Object, 'Shape'):
+            continue
+        for sn in s.SubElementNames:
+            if not sn.startswith('Face'):
+                continue
+            try:
+                f = s.Object.Shape.getElement(sn)
+                info = feature_threaded.get_cylindrical_face_info(f)
+                if info:
+                    info['face_name'] = sn
+                    info['obj'] = s.Object
+                    return info
+            except Exception:
+                pass
+    return None
 
 
 def _do_create_threaded(face_info, params):

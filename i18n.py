@@ -44,6 +44,22 @@ _zh = {
     "Radius:": "半径:",
     "Height:": "高度:",
     "Threaded Rod": "螺丝柱",
+    # Data tab property groups
+    "Chamfer": "倒角",
+    "Fillet": "圆角",
+    "Thread": "螺纹",
+    # Data tab property tooltips
+    "Chamfer distance": "倒角距离",
+    "Edge indices (0-based)": "边索引 (0基)",
+    "Reference to the base feature": "基特征引用",
+    "Fillet radius": "圆角半径",
+    "Nominal thread diameter": "公称螺纹直径",
+    "Thread pitch": "螺距",
+    "Thread length": "螺纹长度",
+    "Left-handed thread": "左旋螺纹",
+    "Start offset. Negative = inward": "起始偏移. 负值=向内",
+    "Object with cylindrical face": "包含圆柱面的对象",
+    "Cylindrical face name": "圆柱面名称",
 }
 
 
