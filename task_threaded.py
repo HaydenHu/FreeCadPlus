@@ -87,6 +87,8 @@ class ThreadedRodTaskPanel:
             self.sel_btn.toggled.connect(self._on_sel_toggle)
             sel_layout.addWidget(self.sel_btn)
             layout.addLayout(sel_layout)
+            self.face_detail = QtGui.QLabel("")
+            layout.addWidget(self.face_detail)
             self._update_face()
 
         layout.addSpacing(8)
@@ -187,13 +189,17 @@ class ThreadedRodTaskPanel:
 
     def _update_face(self):
         try:
-            if self.face_info:
-                fi = self.face_info
-                self.face_label.setText(f"{fi['face_name']}  R={fi['radius']:.1f} H={fi['height']:.1f}")
+            fi = self.face_info
+            if fi:
+                self.face_label.setText(fi['face_name'])
+                self.face_detail.setText(
+                    f"  {tr('Radius:')} {fi['radius']:.2f} mm  {tr('Height:')} {fi['height']:.2f} mm")
+                self.face_detail.setStyleSheet("color: #555;")
             else:
                 self.face_label.setText(tr("No cylinder face selected"))
+                self.face_detail.setText("")
         except RuntimeError:
-            pass  # widget deleted
+            pass
 
     def _fill_from_face(self):
         if not self.face_info or self.feature_obj:
