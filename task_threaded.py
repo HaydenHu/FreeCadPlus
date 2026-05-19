@@ -79,8 +79,9 @@ class ThreadedRodTaskPanel:
         else:
             # Face selection
             sel_layout = QtGui.QHBoxLayout()
-            sel_layout.addWidget(QtGui.QLabel(tr("Cylinder face:")))
+            sel_layout.addWidget(QtGui.QLabel(tr("Ref face:")))
             self.face_label = QtGui.QLabel("")
+            self.face_label.setTextFormat(QtCore.Qt.RichText)
             sel_layout.addWidget(self.face_label)
             self.sel_btn = QtGui.QPushButton(tr("Select"))
             self.sel_btn.setCheckable(True)
@@ -191,10 +192,9 @@ class ThreadedRodTaskPanel:
         try:
             fi = self.face_info
             if fi:
-                self.face_label.setText(fi['face_name'])
+                self.face_label.setText(f"<b>{fi['face_name']}</b>")
                 self.face_detail.setText(
-                    f"  {tr('Radius:')} {fi['radius']:.2f} mm  {tr('Height:')} {fi['height']:.2f} mm")
-                self.face_detail.setStyleSheet("color: #555;")
+                    f"{tr('Radius:')} {fi['radius']:.2f} mm  {tr('Height:')} {fi['height']:.2f} mm")
             else:
                 self.face_label.setText(tr("No cylinder face selected"))
                 self.face_detail.setText("")
