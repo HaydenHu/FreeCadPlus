@@ -167,9 +167,8 @@ class ThreadedRod:
                  source_obj=None, face_name=None,
                  cutter_body_name=None):
         if not hasattr(obj, 'NominalDiameter'):
-            gn = tr('Thread'); gt = tr('Nominal thread diameter')
-            App.Console.PrintMessage(f"FreeCadPlus addProperty NominalDiameter: group='{gn}' tooltip='{gt}'\n")
-            obj.addProperty('App::PropertyLength', 'NominalDiameter', gn, gt)
+            obj.addProperty('App::PropertyLength', 'NominalDiameter',
+                tr('Thread'), tr('Nominal thread diameter'))
         if not hasattr(obj, 'Pitch'):
             obj.addProperty('App::PropertyLength', 'Pitch',
                 tr('Thread'), tr('Thread pitch'))

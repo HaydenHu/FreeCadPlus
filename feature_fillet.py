@@ -79,9 +79,8 @@ class FullFillet:
     def __init__(self, obj, radius=0.0, edge_indices=None, base_obj=None):
         # Properties MUST be added before setting Proxy
         if not hasattr(obj, 'Radius'):
-            gn = tr('Fillet'); gt = tr('Fillet radius')
-            App.Console.PrintMessage(f"FreeCadPlus addProperty Radius: group='{gn}' tooltip='{gt}'\n")
-            obj.addProperty('App::PropertyLength', 'Radius', gn, gt)
+            obj.addProperty('App::PropertyLength', 'Radius',
+                tr('Fillet'), tr('Fillet radius'))
         if not hasattr(obj, 'EdgeIndices'):
             obj.addProperty('App::PropertyIntegerList', 'EdgeIndices',
                 tr('Fillet'), tr('Edge indices (0-based)'))
