@@ -198,6 +198,7 @@ def _do_create_fillet(edges, radius):
                 fp_obj.ViewObject.ShapeColor = base_obj.ViewObject.ShapeColor
         except Exception:
             pass
+        Gui.Selection.clearSelection()
         doc.commitTransaction()
         App.Console.PrintMessage(
             f"FullFillet: {len(edge_indices)} edges, radius: {radius:.4f} mm\n")

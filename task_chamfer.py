@@ -221,6 +221,7 @@ def _do_create_chamfer(edges, size):
                 fp_obj.ViewObject.ShapeColor = base_obj.ViewObject.ShapeColor
         except Exception:
             pass
+        Gui.Selection.clearSelection()
         doc.commitTransaction()
         App.Console.PrintMessage(
             f"FullChamfer: {len(edge_indices)} edges, size: {size:.4f} mm\n")
