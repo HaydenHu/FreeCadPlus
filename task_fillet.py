@@ -83,7 +83,7 @@ class FilletTaskPanel:
             self.radius_spin.setValue(default_r)
             self._update_edges()
         else:
-            self.radius_spin.setValue(1.0)
+            self.radius_spin.setValue(0.0)
 
     def _on_sel_toggle(self, checked):
         if checked:
