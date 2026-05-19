@@ -164,6 +164,7 @@ class ThreadedRodTaskPanel:
         layout.addSpacing(8)
 
         self._setup_initial_values()
+        self.type_combo.currentIndexChanged.connect(self._on_type_changed)
 
     def _on_sel_toggle(self, checked):
         if checked:
@@ -184,11 +185,14 @@ class ThreadedRodTaskPanel:
             self._obs = None
 
     def _update_face(self):
-        if self.face_info:
-            fi = self.face_info
-            self.face_label.setText(f"{fi['face_name']}  R={fi['radius']:.1f} H={fi['height']:.1f}")
-        else:
-            self.face_label.setText(tr("No cylinder face selected"))
+        try:
+            if self.face_info:
+                fi = self.face_info
+                self.face_label.setText(f"{fi['face_name']}  R={fi['radius']:.1f} H={fi['height']:.1f}")
+            else:
+                self.face_label.setText(tr("No cylinder face selected"))
+        except RuntimeError:
+            pass  # widget deleted
 
     def _fill_from_face(self):
         if not self.face_info or self.feature_obj:
@@ -214,23 +218,21 @@ class ThreadedRodTaskPanel:
         self._update_face()
         self._fill_from_face()
 
-        def on_type_changed(idx):
-            if idx == 0:
-                self.size_label.setVisible(False)
-                self.size_combo.setVisible(False)
-                self.custom_widget.setVisible(True)
-            elif idx == 1:
-                self.size_label.setVisible(True)
-                self.size_combo.setVisible(True)
-                self.custom_widget.setVisible(False)
-                self._set_size_combo(self.coarse_parsed)
-            elif idx == 2:
-                self.size_label.setVisible(True)
-                self.size_combo.setVisible(True)
-                self.custom_widget.setVisible(False)
-                self._set_size_combo(self.fine_parsed)
-
-        self.type_combo.currentIndexChanged.connect(on_type_changed)
+    def _on_type_changed(self, idx):
+        if idx == 0:
+            self.size_label.setVisible(False)
+            self.size_combo.setVisible(False)
+            self.custom_widget.setVisible(True)
+        elif idx == 1:
+            self.size_label.setVisible(True)
+            self.size_combo.setVisible(True)
+            self.custom_widget.setVisible(False)
+            self._set_size_combo(self.coarse_parsed)
+        elif idx == 2:
+            self.size_label.setVisible(True)
+            self.size_combo.setVisible(True)
+            self.custom_widget.setVisible(False)
+            self._set_size_combo(self.fine_parsed)
 
     def _set_size_combo(self, parsed_list, select_d=None):
         self.size_combo.clear()
