@@ -99,6 +99,10 @@ class ThreadedRodTaskPanel:
             layout.addWidget(self.sel_btn)
 
             self._update_cyl_face()
+            if not self.ref_face_info and not self.feature_obj:
+                ref = _get_ref_face_from_selection(self.face_info)
+                if ref:
+                    self.ref_face_info = ref
             self._update_ref_face()
 
         layout.addSpacing(8)
@@ -390,6 +394,28 @@ class ThreadedRodTaskPanel:
     def reject(self):
         self._stop_obs()
         Gui.Control.closeDialog()
+
+
+def _get_ref_face_from_selection(cyl_info=None):
+    """Get a non-cylindrical reference face from current selection."""
+    sel = Gui.Selection.getSelectionEx()
+    cyl_name = cyl_info.get('face_name') if cyl_info else None
+    for s in sel:
+        if not hasattr(s.Object, 'Shape'):
+            continue
+        for sn in s.SubElementNames:
+            if not sn.startswith('Face'):
+                continue
+            if sn == cyl_name:
+                continue  # skip the already-detected cylindrical face
+            try:
+                f = s.Object.Shape.getElement(sn)
+                ci = feature_threaded.get_cylindrical_face_info(f)
+                if not ci:  # non-cylindrical → reference face
+                    return {'face_name': sn, 'obj': s.Object, 'type': 'reference'}
+            except Exception:
+                pass
+    return None
 
 
 def _get_selected_face_info():
