@@ -61,6 +61,7 @@ class ThreadedRodTaskPanel:
         self.face_info = face_info
         self.coarse_parsed = []
         self.fine_parsed = []
+        self._obs = None
         self.form = QtGui.QWidget()
         self._build_ui()
 
@@ -74,15 +75,18 @@ class ThreadedRodTaskPanel:
 
         if self.feature_obj:
             layout.addWidget(QtGui.QLabel(f"<b>{tr('Edit ThreadedRod')}</b>"))
-        elif self.face_info:
-            layout.addWidget(QtGui.QLabel(
-                f"<b>{tr('Threaded Rod')}</b><br>"
-                f"{tr('Radius:')} {self.face_info['radius']:.3f} mm<br>"
-                f"{tr('Height:')} {self.face_info['height']:.3f} mm"))
         else:
-            layout.addWidget(QtGui.QLabel(
-                f"<b>{tr('Threaded Rod')}</b><br>"
-                f"<span style='color:#cc8800;'>{tr('No cylinder face selected')}</span>"))
+            # Face selection
+            sel_layout = QtGui.QHBoxLayout()
+            sel_layout.addWidget(QtGui.QLabel(tr("Cylinder face:")))
+            self.face_label = QtGui.QLabel("")
+            sel_layout.addWidget(self.face_label)
+            self.sel_btn = QtGui.QPushButton(tr("Select"))
+            self.sel_btn.setCheckable(True)
+            self.sel_btn.toggled.connect(self._on_sel_toggle)
+            sel_layout.addWidget(self.sel_btn)
+            layout.addLayout(sel_layout)
+            self._update_face()
 
         layout.addSpacing(8)
 
@@ -160,6 +164,38 @@ class ThreadedRodTaskPanel:
         layout.addSpacing(8)
 
         self._setup_initial_values()
+
+    def _on_sel_toggle(self, checked):
+        if checked:
+            Gui.Selection.clearSelection()
+            self._obs = Gui.Selection.addObserver(self)
+        else:
+            self._stop_obs()
+            self.face_info = _get_selected_face_info()
+            self._update_face()
+
+    def _stop_obs(self):
+        if self._obs:
+            try:
+                Gui.Selection.removeObserver(self._obs)
+            except Exception:
+                pass
+            self._obs = None
+
+    def _update_face(self):
+        if self.face_info:
+            fi = self.face_info
+            self.face_label.setText(f"{fi['face_name']}  R={fi['radius']:.1f} H={fi['height']:.1f}")
+        else:
+            self.face_label.setText(tr("No cylinder face selected"))
+
+    def addSelection(self, doc, obj, sub, pnt):
+        self.face_info = _get_selected_face_info()
+        self._update_face()
+
+    def removeSelection(self, doc, obj, sub):
+        self.face_info = _get_selected_face_info()
+        self._update_face()
 
         def on_type_changed(idx):
             if idx == 0:
@@ -270,6 +306,7 @@ class ThreadedRodTaskPanel:
         }
 
     def accept(self):
+        self._stop_obs()
         face_info = self.face_info
         if not face_info and not self.feature_obj:
             face_info = _get_selected_face_info()
@@ -287,6 +324,7 @@ class ThreadedRodTaskPanel:
             _do_create_threaded(face_info, params)
 
     def reject(self):
+        self._stop_obs()
         Gui.Control.closeDialog()
 
 
