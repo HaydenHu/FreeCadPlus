@@ -173,6 +173,7 @@ class ThreadedRodTaskPanel:
             self._stop_obs()
             self.face_info = _get_selected_face_info()
             self._update_face()
+            self._fill_from_face()
 
     def _stop_obs(self):
         if self._obs:
@@ -189,13 +190,30 @@ class ThreadedRodTaskPanel:
         else:
             self.face_label.setText(tr("No cylinder face selected"))
 
+    def _fill_from_face(self):
+        if not self.face_info or self.feature_obj:
+            return
+        fi = self.face_info
+        height = fi['height']
+        suggested_d = fi['radius'] * 2.0
+        self.diam_spin.setValue(suggested_d)
+        self.len_spin.setValue(height)
+        suggested_key, _ = feature_threaded.suggest_thread(fi['radius'])
+        if suggested_key:
+            suggested_d = feature_threaded.METRIC_THREADS[suggested_key][0]
+            self.type_combo.setCurrentIndex(1)
+            self._set_size_combo(self.coarse_parsed, suggested_d)
+            self.custom_widget.setVisible(False)
+
     def addSelection(self, doc, obj, sub, pnt):
         self.face_info = _get_selected_face_info()
         self._update_face()
+        self._fill_from_face()
 
     def removeSelection(self, doc, obj, sub):
         self.face_info = _get_selected_face_info()
         self._update_face()
+        self._fill_from_face()
 
         def on_type_changed(idx):
             if idx == 0:
