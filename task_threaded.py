@@ -3,7 +3,7 @@
 
 import FreeCAD as App
 import FreeCADGui as Gui
-from PySide import QtGui
+from PySide import QtGui, QtCore
 import pd_utils
 import feature_threaded
 from i18n import tr
@@ -87,6 +87,9 @@ class ThreadedRodTaskPanel:
             sel_layout.addWidget(self.sel_btn)
             layout.addLayout(sel_layout)
             self._update_face()
+            # Show size helpers initially
+            self.size_combo.setVisible(False)
+            self.custom_widget.setVisible(True)
 
         layout.addSpacing(8)
 
@@ -194,16 +197,15 @@ class ThreadedRodTaskPanel:
         if not self.face_info or self.feature_obj:
             return
         fi = self.face_info
-        height = fi['height']
-        suggested_d = fi['radius'] * 2.0
-        self.diam_spin.setValue(suggested_d)
-        self.len_spin.setValue(height)
+        self.len_spin.setValue(fi['height'])
         suggested_key, _ = feature_threaded.suggest_thread(fi['radius'])
-        if suggested_key:
-            suggested_d = feature_threaded.METRIC_THREADS[suggested_key][0]
+        if suggested_key and self.coarse_parsed:
+            sd = feature_threaded.METRIC_THREADS[suggested_key][0]
             self.type_combo.setCurrentIndex(1)
-            self._set_size_combo(self.coarse_parsed, suggested_d)
-            self.custom_widget.setVisible(False)
+            self._set_size_combo(self.coarse_parsed, sd)
+        else:
+            self.diam_spin.setValue(fi['radius'] * 2.0)
+            self.type_combo.setCurrentIndex(0)
 
     def addSelection(self, doc, obj, sub, pnt):
         self.face_info = _get_selected_face_info()
