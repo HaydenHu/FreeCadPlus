@@ -372,7 +372,7 @@ class ThreadedRod:
         obj.Label = f"ThreadedRod_M{nd:.0f}x{pt:.2f}"
 
     def onChanged(self, obj, prop):
-        if prop in ("NominalDiameter", "Pitch", "ThreadLength", "LeftHanded", "StartOffset"):
+        if prop in ("公称直径", "螺距", "螺纹长度", "左旋", "起始偏移"):
             if obj.Name in ThreadedRod._rebuilding:
                 return
             from PySide import QtCore
