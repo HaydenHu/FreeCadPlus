@@ -87,9 +87,6 @@ class ThreadedRodTaskPanel:
             sel_layout.addWidget(self.sel_btn)
             layout.addLayout(sel_layout)
             self._update_face()
-            # Show size helpers initially
-            self.size_combo.setVisible(False)
-            self.custom_widget.setVisible(True)
 
         layout.addSpacing(8)
 
