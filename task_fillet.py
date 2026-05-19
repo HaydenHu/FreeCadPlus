@@ -74,7 +74,7 @@ class FilletTaskPanel:
         layout.addLayout(r)
 
         if self.feature_obj:
-            val = self.feature_obj.Radius
+            val = self.feature_obj.半径
             self.radius_spin.setValue(val.Value if hasattr(val, 'Value') else val)
             self._update_edges()
         elif self.edges:
@@ -159,7 +159,7 @@ class FilletTaskPanel:
         radius = self.radius_spin.value()
         Gui.Control.closeDialog()
         if self.feature_obj:
-            self.feature_obj.Radius = radius
+            self.feature_obj.半径 = radius
             self.feature_obj.Document.recompute()
         elif self.edges:
             _do_create_fillet(self.edges, radius)

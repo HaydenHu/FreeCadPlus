@@ -300,15 +300,15 @@ class ThreadedRodTaskPanel:
     def _setup_initial_values(self):
         if self.feature_obj:
             obj = self.feature_obj
-            nd = obj.NominalDiameter
-            pt = obj.Pitch
+            nd = obj.公称直径
+            pt = obj.螺距
             self.diam_spin.setValue(nd.Value if hasattr(nd, 'Value') else nd)
             self.pitch_spin.setValue(pt.Value if hasattr(pt, 'Value') else pt)
-            tl = obj.ThreadLength
+            tl = obj.螺纹长度
             self.len_spin.setValue(tl.Value if hasattr(tl, 'Value') else tl)
-            so = obj.StartOffset
+            so = obj.起始偏移
             self.offset_spin.setValue(so.Value if hasattr(so, 'Value') else so)
-            self.handed_combo.setCurrentIndex(1 if obj.LeftHanded else 0)
+            self.handed_combo.setCurrentIndex(1 if obj.左旋 else 0)
 
             matched = False
             for i, (s, d, p) in enumerate(self.coarse_parsed):
@@ -382,11 +382,11 @@ class ThreadedRodTaskPanel:
         Gui.Control.closeDialog()
         if self.feature_obj:
             obj = self.feature_obj
-            obj.NominalDiameter = params['nom_diameter']
-            obj.Pitch = params['pitch']
-            obj.ThreadLength = params['thread_length']
-            obj.StartOffset = params['start_offset']
-            obj.LeftHanded = params['left_handed']
+            obj.公称直径 = params['nom_diameter']
+            obj.螺距 = params['pitch']
+            obj.螺纹长度 = params['thread_length']
+            obj.起始偏移 = params['start_offset']
+            obj.左旋 = params['left_handed']
             obj.Document.recompute()
         elif face_info:
             _do_create_threaded(face_info, params)
@@ -465,7 +465,7 @@ def _do_create_threaded(face_info, params):
             start_offset=params['start_offset'],
             source_obj=source_obj, face_name=face_name)
         feature_threaded.ViewProviderThreadedRod(fp_obj.ViewObject)
-        fp_obj.BaseCylinder = source_obj
+        fp_obj.基圆柱 = source_obj
         doc.recompute()
         # Rebuild cutter synchronously (safe during transaction)
         try:

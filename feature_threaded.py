@@ -166,41 +166,41 @@ class ThreadedRod:
                  left_handed=False, start_offset=0.0,
                  source_obj=None, face_name=None,
                  cutter_body_name=None):
-        if not hasattr(obj, 'NominalDiameter'):
-            obj.addProperty('App::PropertyLength', 'NominalDiameter',
+        if not hasattr(obj, '公称直径'):
+            obj.addProperty('App::PropertyLength', '公称直径',
                 'FC_' + tr('Thread'), tr('Nominal thread diameter'))
-        if not hasattr(obj, 'Pitch'):
-            obj.addProperty('App::PropertyLength', 'Pitch',
+        if not hasattr(obj, '螺距'):
+            obj.addProperty('App::PropertyLength', '螺距',
                 'FC_' + tr('Thread'), tr('Thread pitch'))
-        if not hasattr(obj, 'ThreadLength'):
-            obj.addProperty('App::PropertyLength', 'ThreadLength',
+        if not hasattr(obj, '螺纹长度'):
+            obj.addProperty('App::PropertyLength', '螺纹长度',
                 'FC_' + tr('Thread'), tr('Thread length'))
-        if not hasattr(obj, 'LeftHanded'):
-            obj.addProperty('App::PropertyBool', 'LeftHanded',
+        if not hasattr(obj, '左旋'):
+            obj.addProperty('App::PropertyBool', '左旋',
                 'FC_' + tr('Thread'), tr('Left-handed thread'))
-        if not hasattr(obj, 'StartOffset'):
-            obj.addProperty('App::PropertyFloat', 'StartOffset',
+        if not hasattr(obj, '起始偏移'):
+            obj.addProperty('App::PropertyFloat', '起始偏移',
                 'FC_' + tr('Thread'), tr('Start offset. Negative = inward'))
-        if not hasattr(obj, 'BaseCylinder'):
-            obj.addProperty('App::PropertyLink', 'BaseCylinder',
+        if not hasattr(obj, '基圆柱'):
+            obj.addProperty('App::PropertyLink', '基圆柱',
                 'FC_' + tr('Thread'), tr('Object with cylindrical face'))
-        if not hasattr(obj, 'CylinderFace'):
-            obj.addProperty('App::PropertyString', 'CylinderFace',
+        if not hasattr(obj, '圆柱面'):
+            obj.addProperty('App::PropertyString', '圆柱面',
                 'FC_' + tr('Thread'), tr('Cylindrical face name'))
         if not hasattr(obj, '_CutterBodyName'):
             obj.addProperty('App::PropertyString', '_CutterBodyName',
                 'Internal', 'Cutter body name')._CutterBodyName = ''
 
         obj.Proxy = self
-        obj.NominalDiameter = nom_diameter
-        obj.Pitch = pitch
-        obj.ThreadLength = thread_length
-        obj.LeftHanded = left_handed
-        obj.StartOffset = start_offset
+        obj.公称直径 = nom_diameter
+        obj.螺距 = pitch
+        obj.螺纹长度 = thread_length
+        obj.左旋 = left_handed
+        obj.起始偏移 = start_offset
         if source_obj:
-            obj.BaseCylinder = source_obj
+            obj.基圆柱 = source_obj
         if face_name:
-            obj.CylinderFace = face_name
+            obj.圆柱面 = face_name
         if cutter_body_name:
             obj._CutterBodyName = cutter_body_name
 
@@ -220,13 +220,13 @@ class ThreadedRod:
         ThreadedRod._rebuilding.add(obj.Name)
         try:
             doc = obj.Document
-            nd = obj.NominalDiameter
-            pt = obj.Pitch
+            nd = obj.公称直径
+            pt = obj.螺距
             nom_d = nd.Value if hasattr(nd, 'Value') else nd
             pitch = pt.Value if hasattr(pt, 'Value') else pt
-            tl = obj.ThreadLength
+            tl = obj.螺纹长度
             length = tl.Value if hasattr(tl, 'Value') else tl
-            handed = obj.LeftHanded
+            handed = obj.左旋
             cutter_r = nom_d / 2.0 + max(pitch * 2, 5.0)
 
             # Get or create a persistent cutter body (reuse same name)
@@ -302,14 +302,14 @@ class ThreadedRod:
             doc.recompute()
 
             # Reposition
-            face = obj.BaseCylinder.Shape.getElement(obj.CylinderFace)
+            face = obj.基圆柱.Shape.getElement(obj.圆柱面)
             ci = get_cylindrical_face_info(face)
             if ci:
                 axis = ci['axis']
                 start_pt = ci['axis_start']
                 z_axis = Vector(0, 0, 1)
                 pl = App.Placement()
-                pl.Base = start_pt + axis * obj.StartOffset
+                pl.Base = start_pt + axis * obj.起始偏移
                 if abs(axis.dot(z_axis) - 1.0) > 1e-7:
                     ra = z_axis.cross(axis)
                     if ra.Length > 1e-7:
@@ -324,22 +324,22 @@ class ThreadedRod:
             ThreadedRod._rebuilding.discard(obj.Name)
 
     def execute(self, obj):
-        if obj.BaseCylinder is None or not obj.CylinderFace:
+        if obj.基圆柱 is None or not obj.圆柱面:
             return
-        source_obj = obj.BaseCylinder
+        source_obj = obj.基圆柱
         if not hasattr(source_obj, 'Shape'):
             return
         try:
-            face = source_obj.Shape.getElement(obj.CylinderFace)
+            face = source_obj.Shape.getElement(obj.圆柱面)
         except Exception:
             return
         cyl_info = get_cylindrical_face_info(face)
         if not cyl_info:
             return
 
-        nom_d = obj.NominalDiameter
-        pitch = obj.Pitch
-        start_offset = obj.StartOffset
+        nom_d = obj.公称直径
+        pitch = obj.螺距
+        start_offset = obj.起始偏移
 
         # Use existing cutter body — do not create/remove inside execute
         cutter_body = None

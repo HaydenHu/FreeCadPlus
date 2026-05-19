@@ -78,22 +78,22 @@ class FullFillet:
 
     def __init__(self, obj, radius=0.0, edge_indices=None, base_obj=None):
         # Properties MUST be added before setting Proxy
-        if not hasattr(obj, 'Radius'):
-            obj.addProperty('App::PropertyLength', 'Radius',
+        if not hasattr(obj, '半径'):
+            obj.addProperty('App::PropertyLength', '半径',
                 'FC_' + tr('Fillet'), tr('Fillet radius'))
-        if not hasattr(obj, 'EdgeIndices'):
-            obj.addProperty('App::PropertyIntegerList', 'EdgeIndices',
+        if not hasattr(obj, '边索引'):
+            obj.addProperty('App::PropertyIntegerList', '边索引',
                 'FC_' + tr('Fillet'), tr('Edge indices (0-based)'))
-        if not hasattr(obj, 'BaseFeature'):
-            obj.addProperty('App::PropertyLink', 'BaseFeature',
+        if not hasattr(obj, '基特征'):
+            obj.addProperty('App::PropertyLink', '基特征',
                 'FC_' + tr('Fillet'), tr('Reference to the base feature'))
 
         obj.Proxy = self
-        obj.Radius = radius
+        obj.半径 = radius
         if edge_indices:
-            obj.EdgeIndices = edge_indices
+            obj.边索引 = edge_indices
         if base_obj:
-            obj.BaseFeature = base_obj
+            obj.基特征 = base_obj
 
     def __str__(self):
         return "FullFillet"
@@ -105,14 +105,14 @@ class FullFillet:
         pass
 
     def execute(self, obj):
-        if obj.BaseFeature is None:
+        if obj.基特征 is None:
             return
-        base_feat = obj.BaseFeature
+        base_feat = obj.基特征
         if not hasattr(base_feat, 'Shape') or base_feat.Shape.isNull():
             return
 
-        radius = obj.Radius
-        edge_indices = obj.EdgeIndices
+        radius = obj.半径
+        edge_indices = obj.边索引
         if radius <= 0 or not edge_indices:
             return
 

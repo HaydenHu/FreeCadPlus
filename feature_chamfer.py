@@ -77,24 +77,27 @@ def create_chamfer_cutter(shape, edge_idx, chamfer_dist):
 class FullChamfer:
     """FeaturePython Proxy for parametric full chamfer."""
 
+    # Property name mapping: English -> Chinese
+    _pn = {'Size': '尺寸', 'EdgeIndices': '边索引', 'BaseFeature': '基特征'}
+
     def __init__(self, obj, size=0.0, edge_indices=None, base_obj=None):
         # Properties MUST be added before setting Proxy
-        if not hasattr(obj, 'Size'):
-            obj.addProperty('App::PropertyLength', 'Size',
+        if not hasattr(obj, '尺寸'):
+            obj.addProperty('App::PropertyLength', '尺寸',
                 'FC_' + tr('Chamfer'), tr('Chamfer distance'))
-        if not hasattr(obj, 'EdgeIndices'):
-            obj.addProperty('App::PropertyIntegerList', 'EdgeIndices',
+        if not hasattr(obj, '边索引'):
+            obj.addProperty('App::PropertyIntegerList', '边索引',
                 'FC_' + tr('Chamfer'), tr('Edge indices (0-based)'))
-        if not hasattr(obj, 'BaseFeature'):
-            obj.addProperty('App::PropertyLink', 'BaseFeature',
+        if not hasattr(obj, '基特征'):
+            obj.addProperty('App::PropertyLink', '基特征',
                 'FC_' + tr('Chamfer'), tr('Reference to the base feature'))
 
         obj.Proxy = self
-        obj.Size = size
+        obj.尺寸 = size
         if edge_indices:
-            obj.EdgeIndices = edge_indices
+            obj.边索引 = edge_indices
         if base_obj:
-            obj.BaseFeature = base_obj
+            obj.基特征 = base_obj
 
     def __str__(self):
         return "FullChamfer"
@@ -106,14 +109,14 @@ class FullChamfer:
         pass
 
     def execute(self, obj):
-        if obj.BaseFeature is None:
+        if obj.基特征 is None:
             return
-        base_feat = obj.BaseFeature
+        base_feat = obj.基特征
         if not hasattr(base_feat, 'Shape') or base_feat.Shape.isNull():
             return
 
-        size = obj.Size
-        edge_indices = obj.EdgeIndices
+        size = obj.尺寸
+        edge_indices = obj.边索引
         if size <= 0 or not edge_indices:
             return
 

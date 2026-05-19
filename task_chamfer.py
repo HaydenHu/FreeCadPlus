@@ -83,7 +83,7 @@ class ChamferTaskPanel:
 
         # Initial values
         if self.feature_obj:
-            val = self.feature_obj.Size
+            val = self.feature_obj.尺寸
             self.dist_spin.setValue(val.Value if hasattr(val, 'Value') else val)
             self._update_edges()
         elif self.edges:
@@ -181,7 +181,7 @@ class ChamferTaskPanel:
         size = self.dist_spin.value()
         Gui.Control.closeDialog()
         if self.feature_obj:
-            self.feature_obj.Size = size
+            self.feature_obj.尺寸 = size
             self.feature_obj.Document.recompute()
         elif self.edges:
             _do_create_chamfer(self.edges, size)
