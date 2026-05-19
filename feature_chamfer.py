@@ -81,13 +81,13 @@ class FullChamfer:
         # Properties MUST be added before setting Proxy
         if not hasattr(obj, 'Size'):
             obj.addProperty('App::PropertyLength', 'Size',
-                tr('Chamfer'), tr('Chamfer distance'))
+                'FC_' + tr('Chamfer'), tr('Chamfer distance'))
         if not hasattr(obj, 'EdgeIndices'):
             obj.addProperty('App::PropertyIntegerList', 'EdgeIndices',
-                tr('Chamfer'), tr('Edge indices (0-based)'))
+                'FC_' + tr('Chamfer'), tr('Edge indices (0-based)'))
         if not hasattr(obj, 'BaseFeature'):
             obj.addProperty('App::PropertyLink', 'BaseFeature',
-                tr('Chamfer'), tr('Reference to the base feature'))
+                'FC_' + tr('Chamfer'), tr('Reference to the base feature'))
 
         obj.Proxy = self
         obj.Size = size

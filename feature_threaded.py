@@ -168,25 +168,25 @@ class ThreadedRod:
                  cutter_body_name=None):
         if not hasattr(obj, 'NominalDiameter'):
             obj.addProperty('App::PropertyLength', 'NominalDiameter',
-                tr('Thread'), tr('Nominal thread diameter'))
+                'FC_' + tr('Thread'), tr('Nominal thread diameter'))
         if not hasattr(obj, 'Pitch'):
             obj.addProperty('App::PropertyLength', 'Pitch',
-                tr('Thread'), tr('Thread pitch'))
+                'FC_' + tr('Thread'), tr('Thread pitch'))
         if not hasattr(obj, 'ThreadLength'):
             obj.addProperty('App::PropertyLength', 'ThreadLength',
-                tr('Thread'), tr('Thread length'))
+                'FC_' + tr('Thread'), tr('Thread length'))
         if not hasattr(obj, 'LeftHanded'):
             obj.addProperty('App::PropertyBool', 'LeftHanded',
-                tr('Thread'), tr('Left-handed thread'))
+                'FC_' + tr('Thread'), tr('Left-handed thread'))
         if not hasattr(obj, 'StartOffset'):
             obj.addProperty('App::PropertyFloat', 'StartOffset',
-                tr('Thread'), tr('Start offset. Negative = inward'))
+                'FC_' + tr('Thread'), tr('Start offset. Negative = inward'))
         if not hasattr(obj, 'BaseCylinder'):
             obj.addProperty('App::PropertyLink', 'BaseCylinder',
-                tr('Thread'), tr('Object with cylindrical face'))
+                'FC_' + tr('Thread'), tr('Object with cylindrical face'))
         if not hasattr(obj, 'CylinderFace'):
             obj.addProperty('App::PropertyString', 'CylinderFace',
-                tr('Thread'), tr('Cylindrical face name'))
+                'FC_' + tr('Thread'), tr('Cylindrical face name'))
         if not hasattr(obj, '_CutterBodyName'):
             obj.addProperty('App::PropertyString', '_CutterBodyName',
                 'Internal', 'Cutter body name')._CutterBodyName = ''

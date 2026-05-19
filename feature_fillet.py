@@ -80,13 +80,13 @@ class FullFillet:
         # Properties MUST be added before setting Proxy
         if not hasattr(obj, 'Radius'):
             obj.addProperty('App::PropertyLength', 'Radius',
-                tr('Fillet'), tr('Fillet radius'))
+                'FC_' + tr('Fillet'), tr('Fillet radius'))
         if not hasattr(obj, 'EdgeIndices'):
             obj.addProperty('App::PropertyIntegerList', 'EdgeIndices',
-                tr('Fillet'), tr('Edge indices (0-based)'))
+                'FC_' + tr('Fillet'), tr('Edge indices (0-based)'))
         if not hasattr(obj, 'BaseFeature'):
             obj.addProperty('App::PropertyLink', 'BaseFeature',
-                tr('Fillet'), tr('Reference to the base feature'))
+                'FC_' + tr('Fillet'), tr('Reference to the base feature'))
 
         obj.Proxy = self
         obj.Radius = radius
