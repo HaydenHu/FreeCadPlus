@@ -86,12 +86,7 @@ def _is_chinese():
     return False
 
 
-_printed = set()
-
 def tr(text):
-    if text not in _printed:
-        _printed.add(text)
-        App.Console.PrintMessage(f"FreeCadPlus tr: '{text}' -> chinese={_is_chinese()}\n")
     if _is_chinese() and text in _zh:
         return _zh[text]
     return text

@@ -80,8 +80,10 @@ class FullChamfer:
     def __init__(self, obj, size=0.0, edge_indices=None, base_obj=None):
         # Properties MUST be added before setting Proxy
         if not hasattr(obj, 'Size'):
-            obj.addProperty('App::PropertyLength', 'Size',
-                tr('Chamfer'), tr('Chamfer distance'))
+            gn = tr('Chamfer')
+            gt = tr('Chamfer distance')
+            App.Console.PrintMessage(f"FreeCadPlus addProperty Size: group='{gn}' tooltip='{gt}'\n")
+            obj.addProperty('App::PropertyLength', 'Size', gn, gt)
         if not hasattr(obj, 'EdgeIndices'):
             obj.addProperty('App::PropertyIntegerList', 'EdgeIndices',
                 tr('Chamfer'), tr('Edge indices (0-based)'))
