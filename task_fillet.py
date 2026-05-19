@@ -91,6 +91,10 @@ class FilletTaskPanel:
             self._stop_obs()
             self.edges = _parse_selection()
             self._update_edges()
+            if self.edges and not self.feature_obj:
+                default_r, _ = self._get_default_radius(
+                    self.edges[0]['edge'], self.edges[0]['obj'].Shape)
+                self.radius_spin.setValue(default_r)
 
     def _stop_obs(self):
         if self._obs:
@@ -133,12 +137,20 @@ class FilletTaskPanel:
             return
         self.edges = _parse_selection()
         self._update_edges()
+        if self.edges and not self.feature_obj:
+            default_r, _ = self._get_default_radius(
+                self.edges[0]['edge'], self.edges[0]['obj'].Shape)
+            self.radius_spin.setValue(default_r)
 
     def removeSelection(self, doc, obj, sub):
         if not sub or not sub.startswith("Edge"):
             return
         self.edges = _parse_selection()
         self._update_edges()
+        if self.edges and not self.feature_obj:
+            default_r, _ = self._get_default_radius(
+                self.edges[0]['edge'], self.edges[0]['obj'].Shape)
+            self.radius_spin.setValue(default_r)
 
     def accept(self):
         self._stop_obs()

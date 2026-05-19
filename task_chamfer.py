@@ -104,6 +104,10 @@ class ChamferTaskPanel:
             self.edges = _parse_selection()
             self._update_edges()
             self._update_hint()
+            if self.edges and not self.feature_obj:
+                default_d, _ = self._get_default_dist(
+                    self.edges[0]['edge'], self.edges[0]['obj'].Shape)
+                self.dist_spin.setValue(default_d)
 
     def _stop_obs(self):
         if self._obs:
@@ -154,6 +158,10 @@ class ChamferTaskPanel:
         self.edges = _parse_selection()
         self._update_edges()
         self._update_hint()
+        if self.edges and not self.feature_obj:
+            default_d, _ = self._get_default_dist(
+                self.edges[0]['edge'], self.edges[0]['obj'].Shape)
+            self.dist_spin.setValue(default_d)
 
     def removeSelection(self, doc, obj, sub):
         if not sub or not sub.startswith("Edge"):
@@ -161,6 +169,10 @@ class ChamferTaskPanel:
         self.edges = _parse_selection()
         self._update_edges()
         self._update_hint()
+        if self.edges and not self.feature_obj:
+            default_d, _ = self._get_default_dist(
+                self.edges[0]['edge'], self.edges[0]['obj'].Shape)
+            self.dist_spin.setValue(default_d)
 
     def accept(self):
         self._stop_obs()
