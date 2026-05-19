@@ -32,7 +32,7 @@ def _inject(wb_name):
     global _INJECTED
     if _INJECTED or "PartDesign" not in wb_name:
         return
-    from PySide import QtGui
+    from PySide import QtGui, QtCore
     import FreeCADGui as Gui
     from i18n import tr
     # Inline mapping to avoid FreeCAD scoping issues
@@ -65,6 +65,7 @@ def _inject(wb_name):
                     menu = QtGui.QMenu()
                     a.setMenu(menu)
                 menu.setToolTipsVisible(True)
+                menu.setIconSize(QtCore.QSize(24, 24))
                 # Button layout
                 btn.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
                 w = btn.iconSize().width()
