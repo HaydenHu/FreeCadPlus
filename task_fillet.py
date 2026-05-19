@@ -67,7 +67,7 @@ class FilletTaskPanel:
         r = QtGui.QHBoxLayout()
         r.addWidget(QtGui.QLabel(tr("Fillet radius (mm):")))
         self.radius_spin = QtGui.QDoubleSpinBox()
-        self.radius_spin.setRange(0.001, 99999.0)
+        self.radius_spin.setRange(0.0, 99999.0)
         self.radius_spin.setDecimals(4)
         self.radius_spin.setSingleStep(0.1)
         r.addWidget(self.radius_spin)

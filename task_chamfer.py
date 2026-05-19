@@ -69,7 +69,7 @@ class ChamferTaskPanel:
         r = QtGui.QHBoxLayout()
         r.addWidget(QtGui.QLabel(tr("Chamfer distance (mm):")))
         self.dist_spin = QtGui.QDoubleSpinBox()
-        self.dist_spin.setRange(0.001, 99999.0)
+        self.dist_spin.setRange(0.0, 99999.0)
         self.dist_spin.setDecimals(4)
         self.dist_spin.setSingleStep(0.1)
         r.addWidget(self.dist_spin)
