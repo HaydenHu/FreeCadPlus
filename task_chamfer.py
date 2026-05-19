@@ -25,9 +25,17 @@ def _parse_selection():
                 idx = int(sn.replace('Edge', '')) - 1
                 edge = shape.Edges[idx]
                 min_l = pd_utils.get_min_adjacent_edge_length(edge, shape)
+                # Get adjacent face names
+                adj_faces = pd_utils.get_adjacent_faces(edge, shape)
+                face_names = []
+                for f in shape.Faces:
+                    for af in adj_faces:
+                        if f.isEqual(af):
+                            face_names.append(f"Face{shape.Faces.index(f)+1}")
                 edges.append({
                     'obj': obj, 'body': body, 'sub': sn,
                     'idx': idx, 'min_len': min_l, 'edge': edge,
+                    'faces': face_names,
                 })
             except Exception:
                 pass
@@ -130,7 +138,11 @@ class ChamferTaskPanel:
                 except Exception:
                     pass
                 typ = tr("circle") if is_circle else tr("straight")
-                txt += f"{ed['sub']} ({typ})  {tr('min adj len')} {ed['min_len']:.2f}\n"
+                faces = ", ".join(ed.get('faces', []))
+                txt += f"{ed['sub']} ({typ})"
+                if faces:
+                    txt += f"  [{faces}]"
+                txt += f"  {tr('min adj len')} {ed['min_len']:.2f}\n"
             self.edge_info.setText(txt)
         else:
             self.edge_info.setText("")
