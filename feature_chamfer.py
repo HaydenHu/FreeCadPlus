@@ -41,17 +41,17 @@ def create_chamfer_cutter(shape, edge_idx, chamfer_dist):
 
     cut0 = -n0
     cut1 = -n1
-    ext = 0.0
+    ext = 0.01
 
     pts_start = [
         v0 - ev * ext,
-        v0 + cut0 * (d + 2) - ev * ext,
-        v0 + cut1 * (d + 2) - ev * ext,
+        v0 + cut0 * d - ev * ext,
+        v0 + cut1 * d - ev * ext,
     ]
     pts_end = [
         v1 + ev * ext,
-        v1 + cut0 * (d + 2) + ev * ext,
-        v1 + cut1 * (d + 2) + ev * ext,
+        v1 + cut0 * d + ev * ext,
+        v1 + cut1 * d + ev * ext,
     ]
     pts_all = pts_start + pts_end
 
