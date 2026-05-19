@@ -212,8 +212,8 @@ class ThreadedRodTaskPanel:
         try:
             fi = self.face_info
             if fi:
-                self.cyl_label.setText(f"<b>{fi['face_name']}</b>")
-                self.cyl_label.setToolTip(f"R={fi['radius']:.2f} H={fi['height']:.2f}")
+                self.cyl_label.setText(
+                    f"<b>{fi['face_name']}</b>  R={fi.get('radius', 0):.2f} mm  H={fi.get('height', 0):.2f} mm")
             else:
                 self.cyl_label.setText(tr("Not selected"))
         except RuntimeError: pass
