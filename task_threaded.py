@@ -187,13 +187,11 @@ class ThreadedRodTaskPanel:
             self._stop_obs()
             info = _get_selected_face_info()
             if info:
-                if info.get('radius') and info.get('axis') is not None:
-                    # Cylindrical face
+                if info.get('type') == 'cylindrical':
                     self.face_info = info
                     self._update_cyl_face()
                     self._fill_from_face()
-                else:
-                    # Reference face (planar/circular end face)
+                elif info.get('type') == 'reference':
                     self.ref_face_info = info
                     self._update_ref_face()
 
@@ -240,13 +238,17 @@ class ThreadedRodTaskPanel:
 
     def addSelection(self, doc, obj, sub, pnt):
         try:
-            info = _get_selected_face_info()
-            if info and info.get('radius') and info.get('axis') is not None:
-                self.face_info = info
+            if not sub or not sub.startswith("Face"):
+                return
+            f = obj.Shape.getElement(sub)
+            ci = feature_threaded.get_cylindrical_face_info(f)
+            if ci:
+                ci['face_name'] = sub; ci['obj'] = obj; ci['type'] = 'cylindrical'
+                self.face_info = ci
                 self._update_cyl_face()
                 self._fill_from_face()
-            elif info:
-                self.ref_face_info = info
+            else:
+                self.ref_face_info = {'face_name': sub, 'obj': obj, 'type': 'reference'}
                 self._update_ref_face()
         except RuntimeError: pass
 
@@ -383,7 +385,7 @@ class ThreadedRodTaskPanel:
 
 
 def _get_selected_face_info():
-    """Get cylindrical face info from current GUI selection."""
+    """Get face info from current GUI selection (cylindrical or any other face)."""
     sel = Gui.Selection.getSelectionEx()
     for s in sel:
         if not hasattr(s.Object, 'Shape'):
@@ -397,7 +399,10 @@ def _get_selected_face_info():
                 if info:
                     info['face_name'] = sn
                     info['obj'] = s.Object
+                    info['type'] = 'cylindrical'
                     return info
+                # Not cylindrical but still a valid face → use as reference
+                return {'face_name': sn, 'obj': s.Object, 'type': 'reference'}
             except Exception:
                 pass
     return None
