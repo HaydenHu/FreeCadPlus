@@ -33,6 +33,7 @@ def _get_coarse_fine_sizes():
         dummy_cyl.Radius = 10
         dummy_cyl.Height = 10
         dummy_body.addObject(dummy_cyl)
+        dummy_doc.recompute()
         dummy_sk = dummy_doc.addObject("Sketcher::SketchObject", "_TmpSk")
         dummy_body.addObject(dummy_sk)
         dummy_sk.AttachmentSupport = (dummy_cyl, "Face2")
