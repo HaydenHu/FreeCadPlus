@@ -84,6 +84,11 @@ class FullChamfer:
             gt = tr('Chamfer distance')
             App.Console.PrintMessage(f"FreeCadPlus addProperty Size: group='{gn}' tooltip='{gt}'\n")
             obj.addProperty('App::PropertyLength', 'Size', gn, gt)
+            try:
+                actual = obj.getGroupOfProperty('Size')
+                App.Console.PrintMessage(f"FreeCadPlus getGroupOfProperty Size='{actual}'\n")
+            except Exception:
+                pass
         if not hasattr(obj, 'EdgeIndices'):
             obj.addProperty('App::PropertyIntegerList', 'EdgeIndices',
                 tr('Chamfer'), tr('Edge indices (0-based)'))
