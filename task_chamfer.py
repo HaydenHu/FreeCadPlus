@@ -213,6 +213,14 @@ def _do_create_chamfer(edges, size):
             fp_obj, size=size, edge_indices=edge_indices, base_obj=base_obj)
         feature_chamfer.ViewProviderFullChamfer(fp_obj.ViewObject)
         doc.recompute()
+        # Copy visual from base feature
+        try:
+            if hasattr(base_obj, 'ViewObject') and hasattr(base_obj.ViewObject, 'ShapeAppearance'):
+                fp_obj.ViewObject.ShapeAppearance = base_obj.ViewObject.ShapeAppearance
+            elif hasattr(base_obj, 'ViewObject') and hasattr(base_obj.ViewObject, 'ShapeColor'):
+                fp_obj.ViewObject.ShapeColor = base_obj.ViewObject.ShapeColor
+        except Exception:
+            pass
         Gui.Selection.clearSelection()
         Gui.Selection.addSelection(fp_obj)
         if body:

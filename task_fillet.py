@@ -191,6 +191,13 @@ def _do_create_fillet(edges, radius):
             fp_obj, radius=radius, edge_indices=edge_indices, base_obj=base_obj)
         feature_fillet.ViewProviderFullFillet(fp_obj.ViewObject)
         doc.recompute()
+        try:
+            if hasattr(base_obj, 'ViewObject') and hasattr(base_obj.ViewObject, 'ShapeAppearance'):
+                fp_obj.ViewObject.ShapeAppearance = base_obj.ViewObject.ShapeAppearance
+            elif hasattr(base_obj, 'ViewObject') and hasattr(base_obj.ViewObject, 'ShapeColor'):
+                fp_obj.ViewObject.ShapeColor = base_obj.ViewObject.ShapeColor
+        except Exception:
+            pass
         Gui.Selection.clearSelection()
         Gui.Selection.addSelection(fp_obj)
         if body:

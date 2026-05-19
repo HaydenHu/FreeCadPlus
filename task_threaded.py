@@ -467,6 +467,13 @@ def _do_create_threaded(face_info, params):
         feature_threaded.ViewProviderThreadedRod(fp_obj.ViewObject)
         fp_obj.基圆柱 = source_obj
         doc.recompute()
+        try:
+            if hasattr(source_obj, 'ViewObject') and hasattr(source_obj.ViewObject, 'ShapeAppearance'):
+                fp_obj.ViewObject.ShapeAppearance = source_obj.ViewObject.ShapeAppearance
+            elif hasattr(source_obj, 'ViewObject') and hasattr(source_obj.ViewObject, 'ShapeColor'):
+                fp_obj.ViewObject.ShapeColor = source_obj.ViewObject.ShapeColor
+        except Exception:
+            pass
         # Rebuild cutter synchronously (safe during transaction)
         try:
             fp_obj.Proxy._rebuild_cutter(fp_obj)
