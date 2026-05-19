@@ -91,6 +91,8 @@ class ChamferTaskPanel:
                 self.edges[0]['edge'], self.edges[0]['obj'].Shape)[0]
             self.dist_spin.setValue(default_d)
             self._update_edges()
+        else:
+            self.dist_spin.setValue(1.0)
 
         self._update_hint()
         self.dist_spin.valueChanged.connect(lambda v: self._update_hint())
