@@ -72,25 +72,26 @@ def create_chamfer_cutter(shape, edge_idx, chamfer_dist):
         center = c.Center
         axis = c.Axis.normalize()
         to_center = (center - v0).normalize()
-        # Rebuild triangle points oriented toward center
         mid_p = (fp + lp) / 2.0
         ev = edge.tangentAt(mid_p).normalize()
-        # Map cut0/cut1 to radial and axial directions
-        rad = to_center  # radial outward from center to edge
-        axi = ev.cross(rad).normalize()  # axial / tangential plane
-        # Recompute triangle in radial-axial frame
-        p0_a = v0 + rad * (cut0.dot(rad)) * d + axi * (cut0.dot(axi)) * d
-        p0_b = v0 + rad * (cut1.dot(rad)) * d + axi * (cut1.dot(axi)) * d
-        tri_pts = [v0, p0_a, p0_b]
+        rad = to_center
+        axi = ev.cross(rad).normalize()
+        # Build triangle: v0 + chamfer along radial/axial directions
+        # cut0/cut1 are into face normals; project to rad/axi frame
+        dx0, dy0 = cut0.dot(rad), cut0.dot(axi)
+        dx1, dy1 = cut1.dot(rad), cut1.dot(axi)
+        p1 = v0 + rad * (dx0 * d) + axi * (dy0 * d)
+        p2 = v0 + rad * (dx1 * d) + axi * (dy1 * d)
+        tri_pts = [v0, p1, p2]
         section_face = Part.Face(Part.Wire(Part.makePolygon(tri_pts + [tri_pts[0]])))
-        p0_ang, p1_ang = edge.ParameterRange
-        angle = abs(p1_ang - p0_ang) if abs(p1_ang - p0_ang) > 0.01 else 6.283185
-        try:
-            rev = section_face.revolve(center, axis, math.degrees(angle))
-            if rev and not rev.isNull():
-                return rev.removeSplitter()
-        except Exception:
-            pass
+        if not section_face.isNull():
+            ang = abs(lp - fp) if abs(lp - fp) > 0.01 else 6.283185
+            try:
+                rev = section_face.revolve(center, axis, math.degrees(ang))
+                if rev and not rev.isNull():
+                    return rev.removeSplitter()
+            except Exception:
+                pass
         # fall through to flat wedge
 
     fs = [
