@@ -75,9 +75,14 @@ def create_fillet_cutter(shape, edge_idx, fillet_radius):
         is_circ = False
 
     if is_circ:
-        # Sweep cross-section along the curved edge path
-        path = Part.Wire([edge])
-        sweep = Part.makeSweep(path, face)
+        c = edge.Curve
+        center = c.Center
+        axis = c.Axis.normalize()
+        p0, p1 = edge.ParameterRange
+        ang = abs(p1 - p0) * 180 / 3.141592653589793
+        if ang < 1:
+            ang = 360
+        sweep = face.revolve(center, axis, ang)
     else:
         sweep = face.extrude(ev * el)
     return sweep
