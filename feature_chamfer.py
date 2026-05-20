@@ -184,6 +184,12 @@ class FullChamfer:
         combined = cutters[0]
         for c in cutters[1:]:
             combined = combined.fuse(c)
+        # Debug: show cutter
+        dbg = obj.Document.getObject("_DebugChamferCutter")
+        if dbg is None:
+            dbg = obj.Document.addObject("Part::Feature", "_DebugChamferCutter")
+            dbg.Label = "_DebugChamferCutter"
+        dbg.Shape = combined; dbg.Visibility = True
         result = base_shape.cut(combined)
         if result.isNull():
             raise RuntimeError("Chamfer boolean cut failed")
