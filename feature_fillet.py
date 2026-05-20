@@ -67,18 +67,8 @@ def create_fillet_cutter(shape, edge_idx, fillet_radius):
     if face.isNull():
         raise RuntimeError("Cannot create cutter face")
 
-    # Check if edge is curved (circular)
-    try:
-        c = edge.Curve
-        is_circ = hasattr(c, 'Radius') and c.Radius > 0
-    except Exception:
-        is_circ = False
-
-    if is_circ:
-        path = Part.Wire([edge])
-        sweep = path.makePipe(face.Wires[0])
-    else:
-        sweep = face.extrude(ev * el)
+    # Use straight extrusion for both straight and circular edges
+    sweep = face.extrude(ev * el)
     return sweep
 
 
