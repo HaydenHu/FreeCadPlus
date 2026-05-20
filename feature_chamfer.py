@@ -3,6 +3,7 @@
 
 import FreeCAD as App
 import Part
+import math
 import pd_utils
 from i18n import tr
 
@@ -67,17 +68,17 @@ def create_chamfer_cutter(shape, edge_idx, chamfer_dist):
         is_circ = False
 
     if is_circ:
-        path = Part.Wire([edge])
-        section_wire = Part.Wire(Part.makePolygon(pts_start + [pts_start[0]]))
+        # Revolve chamfer cross-section around circle center
+        c = edge.Curve
+        center = c.Center
+        axis = c.Axis.normalize()
+        p0, p1 = edge.ParameterRange
+        angle = (abs(p1 - p0) if abs(p1 - p0) > 0.01 else 6.283185)
+        section_face = Part.Face(Part.Wire(Part.makePolygon(pts_start + [pts_start[0]])))
         try:
-            builder = Part.BRepOffsetAPI.MakePipeShell(path)
-            builder.add(section_wire, False, True)
-            builder.build()
-            pipe = builder.shape()
-            if pipe and not pipe.isNull():
-                solid = Part.makeSolid(pipe) if pipe.ShapeType != 'Solid' else pipe
-                if solid and not solid.isNull():
-                    return solid.removeSplitter()
+            rev = section_face.revolve(center, axis, math.degrees(angle))
+            if rev and not rev.isNull():
+                return rev.removeSplitter()
         except Exception:
             pass
         # fall through to flat wedge

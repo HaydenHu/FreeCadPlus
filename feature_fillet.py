@@ -75,19 +75,21 @@ def create_fillet_cutter(shape, edge_idx, fillet_radius):
         is_circ = False
 
     if is_circ:
-        path = Part.Wire([edge])
-        section_wire = Part.Wire(w_edges)
+        # Revolve cross-section around circle center
+        c = edge.Curve
+        center = c.Center
+        axis = c.Axis.normalize()
+        p0, p1 = edge.ParameterRange
+        angle = (abs(p1 - p0) if abs(p1 - p0) > 0.01 else 6.283185)  # rad, min 360°
+        # Translate face to be relative to center before revolving
+        # Face is at v0, revolving around center with axis
+        # face.revolve(center, axis, deg) does exactly this
         try:
-            builder = Part.BRepOffsetAPI.MakePipeShell(path)
-            builder.add(section_wire, False, True)
-            builder.build()
-            pipe = builder.shape()
-            if pipe and not pipe.isNull():
-                solid = Part.makeSolid(pipe) if pipe.ShapeType != 'Solid' else pipe
-                if solid and not solid.isNull():
-                    return solid.removeSplitter()
+            rev = face.revolve(center, axis, math.degrees(angle))
+            if rev and not rev.isNull():
+                return rev.removeSplitter()
         except Exception as e:
-            App.Console.PrintWarning(f"FullFillet makePipeShell failed: {e}\n")
+            App.Console.PrintWarning(f"FullFillet revolve failed: {e}\n")
         # fallback to straight extrusion
         sweep = face.extrude(ev * el)
         return sweep
