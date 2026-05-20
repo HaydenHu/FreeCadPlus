@@ -76,21 +76,16 @@ def create_fillet_cutter(shape, edge_idx, fillet_radius):
 
     if is_circ:
         path = Part.Wire([edge])
-        section_face = Part.Face(Part.Wire(w_edges))
+        section_wire = Part.Wire(w_edges)
         try:
             builder = Part.BRepOffsetAPI.MakePipeShell(path)
-            builder.add(section_face, False, True)
-            builder.setSolid(True)
+            builder.add(section_wire, False, True)
             builder.build()
             pipe = builder.shape()
             if pipe and not pipe.isNull():
-                if pipe.ShapeType != 'Solid':
-                    try:
-                        pipe = Part.Solid(pipe)
-                    except Exception:
-                        pass
-                if pipe and not pipe.isNull():
-                    return pipe.removeSplitter()
+                solid = Part.makeSolid(pipe) if pipe.ShapeType != 'Solid' else pipe
+                if solid and not solid.isNull():
+                    return solid.removeSplitter()
         except Exception as e:
             App.Console.PrintWarning(f"FullFillet makePipeShell failed: {e}\n")
         # fallback to straight extrusion
