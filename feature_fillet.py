@@ -77,9 +77,16 @@ def create_fillet_cutter(shape, edge_idx, fillet_radius):
     if is_circ:
         path = Part.Wire([edge])
         section_wire = Part.Wire(w_edges)
-        pipe = path.makePipe(section_wire)
-        if pipe and not pipe.isNull():
-            return pipe
+        try:
+            builder = Part.BRepOffsetAPI.MakePipeShell(path)
+            builder.add(section_wire)
+            builder.setTransitionMode(0)
+            builder.build()
+            pipe = builder.shape()
+            if pipe and not pipe.isNull():
+                return Part.makeSolid(pipe)
+        except Exception:
+            pass
         # fallback to straight extrusion
         sweep = face.extrude(ev * el)
         return sweep
