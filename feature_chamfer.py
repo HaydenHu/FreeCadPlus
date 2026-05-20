@@ -74,15 +74,12 @@ def create_chamfer_cutter(shape, edge_idx, chamfer_dist):
         to_center = (center - v0).normalize()
         mid_p = (fp + lp) / 2.0
         ev = edge.tangentAt(mid_p).normalize()
-        rad = to_center
-        axi = ev.cross(rad).normalize()
-        # Build triangle: v0 + chamfer along radial/axial directions
-        # cut0/cut1 are into face normals; project to rad/axi frame
-        dx0, dy0 = cut0.dot(rad), cut0.dot(axi)
-        dx1, dy1 = cut1.dot(rad), cut1.dot(axi)
-        p1 = v0 + rad * (dx0 * d) + axi * (dy0 * d)
-        p2 = v0 + rad * (dx1 * d) + axi * (dy1 * d)
-        tri_pts = [v0, p1, p2]
+        # Same approach as working fillet: x=perpendicular, y=toward center
+        x_dir = -to_center.cross(ev).normalize()
+        y_dir = to_center
+        # Chamfer triangle points (straight, not curved)
+        pt2 = lambda a, b: v0 + x_dir * a + y_dir * b
+        tri_pts = [pt2(0, 0), pt2(d, 0), pt2(0, d)]
         section_face = Part.Face(Part.Wire(Part.makePolygon(tri_pts + [tri_pts[0]])))
         if not section_face.isNull():
             ang = abs(lp - fp) if abs(lp - fp) > 0.01 else 6.283185
