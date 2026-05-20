@@ -59,12 +59,27 @@ def create_chamfer_cutter(shape, edge_idx, chamfer_dist):
         poly = Part.makePolygon([pts_all[i] for i in ix] + [pts_all[ix[0]]])
         return Part.Face(Part.Wire(poly))
 
+    # Check if edge is curved → use pipe sweep
+    try:
+        c = edge.Curve
+        is_circ = hasattr(c, 'Radius') and c.Radius > 0
+    except Exception:
+        is_circ = False
+
+    if is_circ:
+        path = Part.Wire([edge])
+        # Chamfer cross-section triangle
+        tri_wire = Part.Wire(Part.makePolygon(pts_start + [pts_start[0]]))
+        pipe = path.makePipe(tri_wire)
+        if pipe and not pipe.isNull():
+            return pipe
+        # fall through to flat wedge
+
     fs = [
         mkface([0, 1, 2]), mkface([3, 4, 5]),
         mkface([0, 1, 4, 3]), mkface([0, 2, 5, 3]),
         mkface([1, 2, 5, 4]),
     ]
-
     shell = Part.makeShell(fs)
     if shell.isNull():
         raise RuntimeError("Cannot create cutter shell")
