@@ -75,21 +75,38 @@ def create_fillet_cutter(shape, edge_idx, fillet_radius):
         is_circ = False
 
     if is_circ:
-        # Revolve cross-section around circle center
+        # Revolve cross-section inside-out for circular edges
+        # For a circle, swap the cut direction (arc should be inside)
         c = edge.Curve
         center = c.Center
         axis = c.Axis.normalize()
         p0, p1 = edge.ParameterRange
-        angle = (abs(p1 - p0) if abs(p1 - p0) > 0.01 else 6.283185)  # rad, min 360°
-        # Translate face to be relative to center before revolving
-        # Face is at v0, revolving around center with axis
-        # face.revolve(center, axis, deg) does exactly this
-        try:
-            rev = face.revolve(center, axis, math.degrees(angle))
-            if rev and not rev.isNull():
-                return rev.removeSplitter()
-        except Exception as e:
-            App.Console.PrintWarning(f"FullFillet revolve failed: {e}\n")
+        angle = abs(p1 - p0) if abs(p1 - p0) > 0.01 else 6.283185
+
+        # Rebuild face: flip x_dir and y_dir so arc faces inside
+        to_center = (center - v0).normalize()
+        x_dir = -to_center.cross(ev).normalize()  # perpendicular to both radius and tangent
+        y_dir = to_center  # pointing from perimeter toward center
+
+        def pt2(a, b):
+            return v0 + x_dir * a + y_dir * b
+
+        mid_angle = 5 * math.pi / 4
+        mid_pt_arc = pt2(r + r * math.cos(mid_angle), r + r * math.sin(mid_angle))
+        arc = Part.Arc(pt2(r, 0), mid_pt_arc, pt2(0, r))
+        w_edges2 = [
+            Part.makeLine(pt2(0, 0), pt2(r, 0)),
+            arc.toShape(),
+            Part.makeLine(pt2(0, r), pt2(0, 0)),
+        ]
+        face2 = Part.Face(Part.Wire(w_edges2))
+        if not face2.isNull():
+            try:
+                rev = face2.revolve(center, axis, math.degrees(angle))
+                if rev and not rev.isNull():
+                    return rev.removeSplitter()
+            except Exception as e:
+                App.Console.PrintWarning(f"FullFillet revolve failed: {e}\n")
         # fallback to straight extrusion
         sweep = face.extrude(ev * el)
         return sweep
