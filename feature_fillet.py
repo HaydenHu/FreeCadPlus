@@ -167,6 +167,16 @@ class FullFillet:
         combined = cutters[0]
         for c in cutters[1:]:
             combined = combined.fuse(c)
+
+        # Debug: show cutter shape in document
+        dbg_name = "_DebugCutterShape"
+        dbg = obj.Document.getObject(dbg_name)
+        if dbg is None:
+            dbg = obj.Document.addObject("Part::Feature", dbg_name)
+            dbg.Label = dbg_name
+        dbg.Shape = combined
+        dbg.Visibility = True
+
         result = base_shape.cut(combined)
         if result.isNull():
             raise RuntimeError("Fillet boolean cut failed")
