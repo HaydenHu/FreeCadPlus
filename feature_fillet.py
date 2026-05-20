@@ -160,6 +160,7 @@ class FullFillet:
             cutter = create_fillet_cutter(base_shape, idx, radius)
             if cutter is None or cutter.isNull():
                 raise RuntimeError(f"Edge {idx} cutter construction failed")
+            App.Console.PrintMessage(f"FullFillet cutter {idx}: valid, type={cutter.ShapeType}\n")
             cutters.append(cutter)
 
         combined = cutters[0]
