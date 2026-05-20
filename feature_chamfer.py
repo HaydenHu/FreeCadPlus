@@ -68,15 +68,21 @@ def create_chamfer_cutter(shape, edge_idx, chamfer_dist):
 
     if is_circ:
         path = Part.Wire([edge])
-        tri_wire = Part.Wire(Part.makePolygon(pts_start + [pts_start[0]]))
+        section_face = Part.Face(Part.Wire(Part.makePolygon(pts_start + [pts_start[0]])))
         try:
             builder = Part.BRepOffsetAPI.MakePipeShell(path)
-            builder.add(tri_wire)
-            builder.setTransitionMode(0)
+            builder.add(section_face, False, True)
+            builder.setSolid(True)
             builder.build()
             pipe = builder.shape()
             if pipe and not pipe.isNull():
-                return Part.makeSolid(pipe)
+                if pipe.ShapeType != 'Solid':
+                    try:
+                        pipe = Part.Solid(pipe)
+                    except Exception:
+                        pass
+                if pipe and not pipe.isNull():
+                    return pipe.removeSplitter()
         except Exception:
             pass
         # fall through to flat wedge
