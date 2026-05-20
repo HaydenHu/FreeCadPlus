@@ -107,8 +107,11 @@ class FilletTaskPanel:
             self._obs = None
 
     def _update_edges(self):
-        cnt = len(self.edges)
-        self.edge_label.setText(f"{cnt} {tr('edge(s)')}")
+        try:
+            cnt = len(self.edges)
+            self.edge_label.setText(f"{cnt} {tr('edge(s)')}")
+        except RuntimeError:
+            return
         if self.edges:
             txt = ""
             for i, ed in enumerate(self.edges):
