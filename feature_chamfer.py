@@ -152,7 +152,7 @@ class FullChamfer:
         min_len = min(pd_utils.get_min_adjacent_edge_length(e, base_shape)
                       for e in edges)
 
-        if size < min_len:
+        if size <= min_len:
             try:
                 new_shape = base_shape.makeChamfer(size, size, edges)
                 if not new_shape.isNull():

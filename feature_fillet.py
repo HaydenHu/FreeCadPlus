@@ -145,18 +145,14 @@ class FullFillet:
 
         min_len = min(pd_utils.get_min_adjacent_edge_length(e, base_shape)
                       for e in edges)
-        rv = radius.Value if hasattr(radius, 'Value') else radius
-        App.Console.PrintMessage(f"FullFillet execute: radius={rv:.2f} min_len={min_len:.2f}\n")
-
-        if radius < min_len:
+        if radius <= min_len:
             try:
                 new_shape = base_shape.makeFillet(radius, edges)
                 if not new_shape.isNull():
                     obj.Shape = new_shape
-                    App.Console.PrintMessage(f"FullFillet: OCCT makeFillet OK, r={rv:.2f}\n")
                     return
-            except Exception as ex:
-                App.Console.PrintWarning(f"FullFillet: OCCT makeFillet failed: {ex}\n")
+            except Exception:
+                pass
 
         cutters = []
         for idx in edge_indices:
