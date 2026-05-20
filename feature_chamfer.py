@@ -68,13 +68,23 @@ def create_chamfer_cutter(shape, edge_idx, chamfer_dist):
         is_circ = False
 
     if is_circ:
-        # Revolve chamfer cross-section around circle center
         c = edge.Curve
         center = c.Center
         axis = c.Axis.normalize()
-        p0, p1 = edge.ParameterRange
-        angle = (abs(p1 - p0) if abs(p1 - p0) > 0.01 else 6.283185)
-        section_face = Part.Face(Part.Wire(Part.makePolygon(pts_start + [pts_start[0]])))
+        to_center = (center - v0).normalize()
+        # Rebuild triangle points oriented toward center
+        mid_p = (fp + lp) / 2.0
+        ev = edge.tangentAt(mid_p).normalize()
+        # Map cut0/cut1 to radial and axial directions
+        rad = to_center  # radial outward from center to edge
+        axi = ev.cross(rad).normalize()  # axial / tangential plane
+        # Recompute triangle in radial-axial frame
+        p0_a = v0 + rad * (cut0.dot(rad)) * d + axi * (cut0.dot(axi)) * d
+        p0_b = v0 + rad * (cut1.dot(rad)) * d + axi * (cut1.dot(axi)) * d
+        tri_pts = [v0, p0_a, p0_b]
+        section_face = Part.Face(Part.Wire(Part.makePolygon(tri_pts + [tri_pts[0]])))
+        p0_ang, p1_ang = edge.ParameterRange
+        angle = abs(p1_ang - p0_ang) if abs(p1_ang - p0_ang) > 0.01 else 6.283185
         try:
             rev = section_face.revolve(center, axis, math.degrees(angle))
             if rev and not rev.isNull():
